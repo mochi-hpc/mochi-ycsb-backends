@@ -30,3 +30,7 @@ install (TARGETS YokanDBClient-cpp
          ARCHIVE DESTINATION lib
          LIBRARY DESTINATION lib)
 install_jar (YokanDBClient DESTINATION lib)
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/bin/mochi-ycsb-cli
+         DESTINATION bin
+         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
+                     GROUP_EXECUTE GROUP_WRITE GROUP_READ)
