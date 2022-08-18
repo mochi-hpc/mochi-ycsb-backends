@@ -1,9 +1,12 @@
 #!/bin/bash
 
+HERE=`dirname "$(realpath $0)"`
+PREFIX="$(dirname "$HERE")"
+
 YCSB_ROOT=@YCSB_ROOT@
-MOCHI_YCSB_ROOT=@CMAKE_INSTALL_PREFIX@
-export CLASSPATH=$CLASSPATH:"$YCSB_ROOT/lib/*.jar"
-export CLASSPATH=$CLASSPATH:"$MOCHI_YCSB_ROOT/lib/*.jar"
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"$MOCHI_YCSB_ROOT/lib"
+
+export CLASSPATH=$CLASSPATH:"$YCSB_ROOT/lib/*"
+export CLASSPATH=$CLASSPATH:"$PREFIX/lib/*"
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"$PREFIX/lib"
 
 java site.ycsb.CommandLine -db gov.anl.mochi.YokanDBClient

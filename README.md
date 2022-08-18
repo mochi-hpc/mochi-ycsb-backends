@@ -47,3 +47,33 @@ $ cd build
 $ cmake .. -DYCSB_ROOT=`spack location -i ycsb`
 $ make
 ```
+
+## Testing the installation
+
+If you have installed mochi-ycsb-backends with Spack, make sure that
+the package is loaded (`spack load mochi-ycsb-backends`), then you
+can start the CLI for testing, as follows.
+
+```
+mochi-ycsb-cli
+```
+
+You will end up in YCBS's CLI, with the YokanDBClient loaded as the
+DB backend. You can then interact with the database (type `help` to
+see a list of available commands).
+
+If you have built this repository manually and you have installed
+it in a specific location `<my/install/path>`, you will need to
+make sure you are in a Spack environment that includes the necessary
+dependencies. You can then use the CLI as follows.
+
+```
+$ my/install/path/bin/mochi-ycsb-cli
+```
+
+You may also run the CLI from the build directory without having
+installed mochi-ycsb-backends anywhere:
+
+```
+$ bin/mochi-ycsb-cli
+```

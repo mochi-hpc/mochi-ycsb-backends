@@ -17,12 +17,15 @@ add_jar (YokanDBClient
          VERSION 0.0.1
          GENERATE_NATIVE_HEADERS YokanDBClient-native DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
          SOURCES src/java/gov/anl/mochi/YokanDBClient.java
-         INCLUDE_JARS ${YCSB_JAR})
+         INCLUDE_JARS ${YCSB_JAR}
+         OUTPUT_DIR ${PROJECT_BINARY_DIR}/lib)
 
 add_library (YokanDBClient-cpp SHARED
              src/cpp/YokanDBClient-cpp.cpp)
 target_include_directories (YokanDBClient-cpp PRIVATE ${JNI_INCLUDE_DIRS})
 target_link_libraries (YokanDBClient-cpp PRIVATE YokanDBClient-native ${JNI_LIBRARIES})
+set_target_properties (YokanDBClient-cpp PROPERTIES
+                       LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 
 configure_file (bin/mochi-ycsb-cli.in bin/mochi-ycsb-cli @ONLY USE_SOURCE_PERMISSIONS)
 
