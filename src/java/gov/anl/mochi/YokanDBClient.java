@@ -18,7 +18,7 @@ import java.util.Vector;
 public class YokanDBClient extends DB {
 
     static {
-        System.loadLibrary("YokabDBClient-cpp");
+        System.loadLibrary("YokanDBClient-cpp");
     }
 
     @Override

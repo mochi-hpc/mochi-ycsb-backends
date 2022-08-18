@@ -1,0 +1,9 @@
+#!/bin/bash
+
+YCSB_ROOT=@YCSB_ROOT@
+MOCHI_YCSB_ROOT=@CMAKE_INSTALL_PREFIX@
+export CLASSPATH=$CLASSPATH:"$YCSB_ROOT/lib/*.jar"
+export CLASSPATH=$CLASSPATH:"$MOCHI_YCSB_ROOT/lib/*.jar"
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"$MOCHI_YCSB_ROOT/lib"
+
+java site.ycsb.CommandLine -db gov.anl.mochi.YokanDBClient

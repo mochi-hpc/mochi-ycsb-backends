@@ -24,6 +24,8 @@ add_library (YokanDBClient-cpp SHARED
 target_include_directories (YokanDBClient-cpp PRIVATE ${JNI_INCLUDE_DIRS})
 target_link_libraries (YokanDBClient-cpp PRIVATE YokanDBClient-native ${JNI_LIBRARIES})
 
+configure_file (bin/mochi-ycsb-cli.in bin/mochi-ycsb-cli @ONLY USE_SOURCE_PERMISSIONS)
+
 install (TARGETS YokanDBClient-cpp
          ARCHIVE DESTINATION lib
          LIBRARY DESTINATION lib)
