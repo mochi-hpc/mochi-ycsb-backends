@@ -23,8 +23,12 @@ add_jar (MochiDBClient
          OUTPUT_DIR ${PROJECT_BINARY_DIR}/lib)
 
 add_library (mochi-ycsb SHARED
-             src/cpp/MochiDBClient.cpp)
+             src/cpp/MochiDBClient.cpp
+             src/cpp/TestDB.cpp)
 target_include_directories (mochi-ycsb PRIVATE ${JNI_INCLUDE_DIRS})
+target_include_directories (mochi-ycsb PUBLIC $<INSTALL_INTERFACE:include>)
+target_include_directories (mochi-ycsb BEFORE PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 target_link_libraries (mochi-ycsb PRIVATE MochiDBClient-native ${JNI_LIBRARIES})
 set_target_properties (mochi-ycsb PROPERTIES
                        LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
@@ -39,3 +43,5 @@ install (FILES ${CMAKE_CURRENT_BINARY_DIR}/bin/mochi-ycsb-cli
          DESTINATION bin
          PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
                      GROUP_EXECUTE GROUP_WRITE GROUP_READ)
+install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/MochiYCSB.hpp
+         DESTINATION include)
