@@ -14,12 +14,12 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
 
-public class YokanDBClient extends DB {
+public class MochiDBClient extends DB {
 
     private long impl; /* pointer to C++ class */
 
     static {
-        System.loadLibrary("YokanDBClient-cpp");
+        System.loadLibrary("mochi-ycsb");
     }
 
     @Override

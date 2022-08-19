@@ -1,4 +1,4 @@
-#include <gov_anl_mochi_YokanDBClient.h>
+#include <gov_anl_mochi_MochiDBClient.h>
 
 #include "Status.hpp"
 #include "Map.hpp"
@@ -15,19 +15,19 @@ using mochi_key_t   = std::string;
 using mochi_value_t = std::map<std::string, std::string>;
 using mochi_db_t    = std::map<mochi_key_t, mochi_value_t>;
 
-JNIEXPORT jlong JNICALL Java_gov_anl_mochi_YokanDBClient__1init
+JNIEXPORT jlong JNICALL Java_gov_anl_mochi_MochiDBClient__1init
     (JNIEnv * env, jobject self) {
     auto impl = new mochi_db_t();
     return reinterpret_cast<jlong>(impl);
 }
 
-JNIEXPORT void JNICALL Java_gov_anl_mochi_YokanDBClient__1cleanup
+JNIEXPORT void JNICALL Java_gov_anl_mochi_MochiDBClient__1cleanup
     (JNIEnv * env, jobject self, jlong impl) {
     auto db = reinterpret_cast<mochi_db_t*>(impl);
     delete db;
 }
 
-JNIEXPORT jobject JNICALL Java_gov_anl_mochi_YokanDBClient__1read
+JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1read
     (JNIEnv * env, jobject self, jlong impl, jstring table,
      jstring key, jobject fields, jobject results) {
     auto db = reinterpret_cast<mochi_db_t*>(impl);
@@ -78,7 +78,7 @@ JNIEXPORT jobject JNICALL Java_gov_anl_mochi_YokanDBClient__1read
     return Status::OK(env);
 }
 
-JNIEXPORT jobject JNICALL Java_gov_anl_mochi_YokanDBClient__1scan
+JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1scan
     (JNIEnv * env, jobject self, jlong impl, jstring table,
      jstring startKey, jint recordCount, jobject fields, jobject results) {
     auto db = reinterpret_cast<mochi_db_t*>(impl);
@@ -140,7 +140,7 @@ JNIEXPORT jobject JNICALL Java_gov_anl_mochi_YokanDBClient__1scan
     return Status::OK(env);
 }
 
-JNIEXPORT jobject JNICALL Java_gov_anl_mochi_YokanDBClient__1update
+JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1update
     (JNIEnv * env, jobject self, jlong impl, jstring table,
      jstring key, jobject values) {
     auto db = reinterpret_cast<mochi_db_t*>(impl);
@@ -170,7 +170,7 @@ JNIEXPORT jobject JNICALL Java_gov_anl_mochi_YokanDBClient__1update
     return Status::OK(env);
 }
 
-JNIEXPORT jobject JNICALL Java_gov_anl_mochi_YokanDBClient__1insert
+JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1insert
     (JNIEnv * env, jobject self, jlong impl, jstring table,
      jstring key, jobject values) {
     auto db = reinterpret_cast<mochi_db_t*>(impl);
@@ -200,7 +200,7 @@ JNIEXPORT jobject JNICALL Java_gov_anl_mochi_YokanDBClient__1insert
     return Status::OK(env);
 }
 
-JNIEXPORT jobject JNICALL Java_gov_anl_mochi_YokanDBClient__1delete
+JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1delete
     (JNIEnv * env, jobject self, jlong impl, jstring table, jstring key) {
     auto db = reinterpret_cast<mochi_db_t*>(impl);
 

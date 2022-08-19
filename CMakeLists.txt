@@ -15,26 +15,26 @@ else ()
 endif ()
 
 set (CMAKE_JNI_TARGET TRUE)
-add_jar (YokanDBClient
+add_jar (MochiDBClient
          VERSION 0.0.1
-         GENERATE_NATIVE_HEADERS YokanDBClient-native DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
-         SOURCES src/java/gov/anl/mochi/YokanDBClient.java
+         GENERATE_NATIVE_HEADERS MochiDBClient-native DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+         SOURCES src/java/gov/anl/mochi/MochiDBClient.java
          INCLUDE_JARS ${YCSB_JAR}
          OUTPUT_DIR ${PROJECT_BINARY_DIR}/lib)
 
-add_library (YokanDBClient-cpp SHARED
-             src/cpp/YokanDBClient-cpp.cpp)
-target_include_directories (YokanDBClient-cpp PRIVATE ${JNI_INCLUDE_DIRS})
-target_link_libraries (YokanDBClient-cpp PRIVATE YokanDBClient-native ${JNI_LIBRARIES})
-set_target_properties (YokanDBClient-cpp PROPERTIES
+add_library (mochi-ycsb SHARED
+             src/cpp/MochiDBClient.cpp)
+target_include_directories (mochi-ycsb PRIVATE ${JNI_INCLUDE_DIRS})
+target_link_libraries (mochi-ycsb PRIVATE MochiDBClient-native ${JNI_LIBRARIES})
+set_target_properties (mochi-ycsb PROPERTIES
                        LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 
 configure_file (bin/mochi-ycsb-cli.in bin/mochi-ycsb-cli @ONLY USE_SOURCE_PERMISSIONS)
 
-install (TARGETS YokanDBClient-cpp
+install (TARGETS mochi-ycsb
          ARCHIVE DESTINATION lib
          LIBRARY DESTINATION lib)
-install_jar (YokanDBClient DESTINATION lib)
+install_jar (MochiDBClient DESTINATION lib)
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/bin/mochi-ycsb-cli
          DESTINATION bin
          PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
