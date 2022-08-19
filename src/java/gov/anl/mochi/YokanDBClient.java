@@ -62,11 +62,12 @@ public class YokanDBClient extends DB {
         if(!status.isOk()) {
             return status;
         }
-        result.setSize(r.size());
         for(Integer i = 0; i < r.size(); i++) {
+            HashMap<String, ByteIterator> current_hash_map = new HashMap<String, ByteIterator>();
             for(Map.Entry<String, byte[]> entry : r.get(i).entrySet()) {
-                result.get(i).put(entry.getKey(), new ByteArrayByteIterator(entry.getValue()));
+                current_hash_map.put(entry.getKey(), new ByteArrayByteIterator(entry.getValue()));
             }
+            result.add(current_hash_map);
         }
         return status;
     }

@@ -82,7 +82,61 @@ JNIEXPORT jobject JNICALL Java_gov_anl_mochi_YokanDBClient__1scan
     (JNIEnv * env, jobject self, jlong impl, jstring table,
      jstring startKey, jint recordCount, jobject fields, jobject results) {
     auto db = reinterpret_cast<mochi_db_t*>(impl);
-    // TODO
+
+    const char* table_str     = env->GetStringUTFChars(table, nullptr);
+    const char* start_key_str = env->GetStringUTFChars(startKey, nullptr);
+
+    auto full_start_key = std::string(table_str) + "/" + start_key_str;
+
+    jclass hash_map_class   = env->FindClass("java/util/HashMap");
+    jmethodID hash_map_init = env->GetMethodID(hash_map_class, "<init>", "()V");
+    jclass vector_class     = env->FindClass("java/util/Vector");
+    jmethodID vector_add    = env->GetMethodID(vector_class, "add", "(Ljava/lang/Object;)Z");
+
+    if(fields == nullptr) {
+        int i = 0;
+        for(auto it = db->lower_bound(full_start_key); it != db->end() && i < recordCount; ++it, ++i) {
+            jobject jhashmap = env->NewObject(hash_map_class, hash_map_init);
+            auto hash_map_wrapper = Map(env, jhashmap);
+
+            const auto& entry = it->second;
+            for(const auto& p : entry) {
+                jstring jstring_field   = String::New(env, p.first);
+                jbyteArray jbytes_value = ByteArray::New(env, p.second);
+                hash_map_wrapper.put((jobject)jstring_field, (jobject)jbytes_value);
+            }
+
+            env->CallObjectMethod(results, vector_add, jhashmap);
+        }
+    } else {
+        int i = 0;
+
+        auto field_set_wrapper = Set(env, fields);
+
+        for(auto it = db->lower_bound(full_start_key); it != db->end() && i < recordCount; ++it, ++i) {
+            jobject jhashmap  = env->NewObject(hash_map_class, hash_map_init);
+            auto hash_map_wrapper = Map(env, jhashmap);
+            const auto& entry = it->second;
+
+            field_set_wrapper.foreach([db, env, &entry, &hash_map_wrapper](jobject field) {
+                jstring jstring_field = (jstring)field;
+                const char* field_str = env->GetStringUTFChars(jstring_field, nullptr);
+                auto it = entry.find(field_str);
+                if(it != entry.end()) {
+                    jstring jstring_field   = String::New(env, it->first);
+                    jbyteArray jbytes_value = ByteArray::New(env, it->second);
+                    hash_map_wrapper.put((jobject)jstring_field, (jobject)jbytes_value);
+                }
+                env->ReleaseStringUTFChars(jstring_field, field_str);
+            });
+
+            env->CallObjectMethod(results, vector_add, jhashmap);
+        }
+    }
+
+    env->ReleaseStringUTFChars(startKey, start_key_str);
+    env->ReleaseStringUTFChars(table, table_str);
+
     return Status::OK(env);
 }
 
