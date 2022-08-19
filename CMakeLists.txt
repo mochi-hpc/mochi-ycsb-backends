@@ -1,6 +1,8 @@
 cmake_minimum_required (VERSION 3.0)
 project (HelloWorld)
 
+set (CMAKE_CXX_STANDARD 14)
+
 find_package (Java REQUIRED)
 find_package (JNI REQUIRED)
 include (UseJava)

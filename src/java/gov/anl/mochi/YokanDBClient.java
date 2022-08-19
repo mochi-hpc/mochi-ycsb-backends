@@ -58,17 +58,25 @@ public class YokanDBClient extends DB {
 
     @Override
     public Status update(final String table, final String key, final Map<String, ByteIterator> values) {
-        return this._update(this.impl, table, key, values);
+        HashMap<String, byte[]> fields = new HashMap<String, byte[]>();
+        for(Map.Entry<String, ByteIterator> entry : values.entrySet()) {
+            fields.put(entry.getKey(), entry.getValue().toArray());
+        }
+        return this._update(this.impl, table, key, fields);
     }
 
-    private native Status _update(long impl, final String table, final String key, final Map<String, ByteIterator> values);
+    private native Status _update(long impl, final String table, final String key, final Map<String, byte[]> values);
 
     @Override
     public Status insert(final String table, final String key, final Map<String, ByteIterator> values) {
-        return this._insert(this.impl, table, key, values);
+        HashMap<String, byte[]> fields = new HashMap<String, byte[]>();
+        for(Map.Entry<String, ByteIterator> entry : values.entrySet()) {
+            fields.put(entry.getKey(), entry.getValue().toArray());
+        }
+        return this._insert(this.impl, table, key, fields);
     }
 
-    private native Status _insert(long impl, final String table, final String key, final Map<String, ByteIterator> values);
+    private native Status _insert(long impl, final String table, final String key, final Map<String, byte[]> values);
 
     @Override
     public Status delete(final String table, final String key) {
