@@ -1,6 +1,9 @@
 #include <gov_anl_mochi_YokanDBClient.h>
+
 #include "Status.hpp"
 #include "Map.hpp"
+#include "String.hpp"
+#include "ByteArray.hpp"
 
 #include <map>
 #include <string>
@@ -28,7 +31,50 @@ JNIEXPORT jobject JNICALL Java_gov_anl_mochi_YokanDBClient__1read
     (JNIEnv * env, jobject self, jlong impl, jstring table,
      jstring key, jobject fields, jobject results) {
     auto db = reinterpret_cast<mochi_db_t*>(impl);
-    // TODO
+
+    const char* table_str = env->GetStringUTFChars(table, nullptr);
+    const char* key_str   = env->GetStringUTFChars(key, nullptr);
+
+    auto full_key = std::string(table_str) + "/" + key_str;
+    auto it       = db->find(full_key);
+    auto found    = it != db->end();
+
+    if(!found) {
+        env->ReleaseStringUTFChars(key, key_str);
+        env->ReleaseStringUTFChars(table, table_str);
+        return Status::NOT_FOUND(env);
+    }
+
+    const auto& entry       = it->second;
+    auto result_map_wrapper = Map(env, results);
+
+    if(fields == nullptr) {
+
+        for(const auto& p : entry) {
+            jstring jstring_field   = String::New(env, p.first);
+            jbyteArray jbytes_value = ByteArray::New(env, p.second);
+            result_map_wrapper.put((jobject)jstring_field, (jobject)jbytes_value);
+        }
+
+    } else {
+        auto fields_set_wrapper = Set(env, fields);
+
+        fields_set_wrapper.foreach([&entry, &result_map_wrapper, env](jobject field) {
+
+            jstring jstring_field = (jstring)field;
+            const char* field_str = env->GetStringUTFChars(jstring_field, nullptr);
+            auto it = entry.find(field_str);
+            if(it != entry.end()) {
+                jbyteArray jbytes_value = ByteArray::New(env, it->second);
+                result_map_wrapper.put(field, (jobject)jbytes_value);
+            }
+            env->ReleaseStringUTFChars(jstring_field, field_str);
+        });
+    }
+
+    env->ReleaseStringUTFChars(key, key_str);
+    env->ReleaseStringUTFChars(table, table_str);
+
     return Status::OK(env);
 }
 

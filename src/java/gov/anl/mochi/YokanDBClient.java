@@ -7,7 +7,6 @@
 package gov.anl.mochi;
 
 import site.ycsb.*;
-import site.ycsb.Status;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -41,20 +40,39 @@ public class YokanDBClient extends DB {
     @Override
     public Status read(final String table, final String key, final Set<String> fields,
             final Map<String, ByteIterator> result) {
-        return this._read(this.impl, table, key, fields, result);
+        HashMap<String, byte[]> r = new HashMap<String, byte[]>();
+        Status status = this._read(this.impl, table, key, fields, r);
+        if(!status.isOk()) {
+            return status;
+        }
+        for(Map.Entry<String, byte[]> entry : r.entrySet()) {
+            result.put(entry.getKey(), new ByteArrayByteIterator(entry.getValue()));
+        }
+        return status;
     }
 
     private native Status _read(long impl, final String table, final String key, final Set<String> fields,
-            final Map<String, ByteIterator> result);
+            final Map<String, byte[]> result);
 
     @Override
     public Status scan(final String table, final String startkey, final int recordcount, final Set<String> fields,
             final Vector<HashMap<String, ByteIterator>> result) {
-        return this._scan(this.impl, table, startkey, recordcount, fields, result);
+        Vector<HashMap<String, byte[]>> r = new Vector<HashMap<String, byte[]>>();
+        Status status = this._scan(this.impl, table, startkey, recordcount, fields, r);
+        if(!status.isOk()) {
+            return status;
+        }
+        result.setSize(r.size());
+        for(Integer i = 0; i < r.size(); i++) {
+            for(Map.Entry<String, byte[]> entry : r.get(i).entrySet()) {
+                result.get(i).put(entry.getKey(), new ByteArrayByteIterator(entry.getValue()));
+            }
+        }
+        return status;
     }
 
     private native Status _scan(long impl, final String table, final String startkey, final int recordcount, final Set<String> fields,
-            final Vector<HashMap<String, ByteIterator>> result);
+            final Vector<HashMap<String, byte[]>> result);
 
     @Override
     public Status update(final String table, final String key, final Map<String, ByteIterator> values) {
