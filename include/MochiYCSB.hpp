@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include <functional>
+#include <cstring>
 
 namespace mochi {
 namespace ycsb {
@@ -79,7 +80,7 @@ class StringBuffer : public Buffer {
 /**
  * @brief Wrapper for a memory region.
  */
-class StringView {
+class StringView : public Buffer {
 
     const char* m_data;
     size_t      m_size;
@@ -90,11 +91,15 @@ class StringView {
     : m_data(data)
     , m_size(size) {}
 
-    inline const char* data() const {
+    StringView(const char* data)
+    : m_data(data)
+    , m_size(std::strlen(data)) {}
+
+    const char* data() const override {
         return m_data;
     }
 
-    inline const size_t size() const {
+    size_t size() const override {
         return m_size;
     }
 
@@ -225,25 +230,28 @@ class DB {
  * @param create Create function
  */
 void RegisterDBType(const char* name,
-                    std::function<std::unique_ptr<DB>()> create);
+                    std::function<DB* ()> create);
 
 
 /**
  * @brief Create a DB instance from the name of a backend.
  * If the backend doesn't exist, a null pointer will be returned.
  *
+ * It is the responsibility of the caller to called delete on
+ * the returned pointer when no longer needed.
+ *
  * @param name Backend name
- * @return Unique pointer to a DB instance
+ * @return A pointer to a DB instance
  */
-std::unique_ptr<DB> CreateDB(const char* name);
+DB* CreateDB(const char* name);
 
 template<typename T>
 struct MochiDBRegistry {
 
     MochiDBRegistry(const char* name) {
         mochi::ycsb::RegisterDBType(name,
-            []() -> std::unique_ptr<mochi::ycsb::DB> {
-                return std::make_unique<T>();
+            []() -> mochi::ycsb::DB* {
+                return new T();
             });
     }
 

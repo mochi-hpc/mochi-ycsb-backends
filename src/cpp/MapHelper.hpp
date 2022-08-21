@@ -1,13 +1,16 @@
-#ifndef YCSB_MOCHI_MAP_HPP
-#define YCSB_MOCHI_MAP_HPP
+#ifndef YCSB_MOCHI_MAP_HELPER_HPP
+#define YCSB_MOCHI_MAP_HELPER_HPP
 
-#include "Set.hpp"
+#include "SetHelper.hpp"
 
 #include <jni.h>
 #include <utility>
 #include <iostream>
 
-class Map {
+namespace mochi {
+namespace ycsb {
+
+struct MapHelper {
 
     JNIEnv*   m_env;
     jobject   m_self;
@@ -18,12 +21,10 @@ class Map {
     jmethodID m_id_Map_Entry_getKey;
     jmethodID m_id_Map_Entry_getValue;
 
-    public:
-
-    Map(JNIEnv* env, jobject map)
+    MapHelper(JNIEnv* env, jobject map = nullptr)
     : m_env(env)
     , m_self(map)
-    , m_class_Map(env->GetObjectClass(map))
+    , m_class_Map(map ? env->GetObjectClass(map) : env->FindClass("java/util/Map"))
     , m_class_Map_Entry(env->FindClass("java/util/Map$Entry"))
     , m_id_Map_entrySet(env->GetMethodID(m_class_Map, "entrySet", "()Ljava/util/Set;"))
     , m_id_Map_put(env->GetMethodID(m_class_Map, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"))
@@ -34,8 +35,8 @@ class Map {
     template<typename F>
     void foreach(const F& fun) const {
         jobject entrySet = m_env->CallObjectMethod(m_self, m_id_Map_entrySet);
-        auto set_wrapper = Set(m_env, entrySet);
-        set_wrapper.foreach([&fun, this](jobject entry) {
+        auto set_helper = SetHelper(m_env, entrySet);
+        set_helper.foreach([&fun, this](jobject entry) {
             jobject key   = m_env->CallObjectMethod(entry, m_id_Map_Entry_getKey);
             jobject val   = m_env->CallObjectMethod(entry, m_id_Map_Entry_getValue);
             fun(key, val);
@@ -45,7 +46,9 @@ class Map {
     void put(jobject key, jobject value) {
         m_env->CallObjectMethod(m_self, m_id_Map_put, key, value);
     }
-
 };
+
+}
+}
 
 #endif

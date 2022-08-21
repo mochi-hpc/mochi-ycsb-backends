@@ -42,9 +42,6 @@ public class MochiDBClient extends DB {
             final Map<String, ByteIterator> result) {
         HashMap<String, byte[]> r = new HashMap<String, byte[]>();
         Status status = this._read(this.impl, table, key, fields, r);
-        if(!status.isOk()) {
-            return status;
-        }
         for(Map.Entry<String, byte[]> entry : r.entrySet()) {
             result.put(entry.getKey(), new ByteArrayByteIterator(entry.getValue()));
         }
@@ -59,9 +56,6 @@ public class MochiDBClient extends DB {
             final Vector<HashMap<String, ByteIterator>> result) {
         Vector<HashMap<String, byte[]>> r = new Vector<HashMap<String, byte[]>>();
         Status status = this._scan(this.impl, table, startkey, recordcount, fields, r);
-        if(!status.isOk()) {
-            return status;
-        }
         for(Integer i = 0; i < r.size(); i++) {
             HashMap<String, ByteIterator> current_hash_map = new HashMap<String, ByteIterator>();
             for(Map.Entry<String, byte[]> entry : r.get(i).entrySet()) {

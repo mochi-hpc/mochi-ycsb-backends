@@ -25,18 +25,20 @@ Status Status::OK() {
     return Status("OK", "The operation completed successfully.");
 }
 
+Buffer::~Buffer() = default;
+
 DB::~DB() = default;
 
 static std::unordered_map<
     std::string,
-    std::function<std::unique_ptr<DB>()>> dbFactory;
+    std::function<DB* ()>> dbFactory;
 
 void RegisterDBType(const char* name,
-                    std::function<std::unique_ptr<DB>()> create) {
+                    std::function<DB*()> create) {
     dbFactory[name] = std::move(create);
 }
 
-std::unique_ptr<DB> CreateDB(const char* name) {
+DB* CreateDB(const char* name) {
     auto it = dbFactory.find(name);
     if(it == dbFactory.end()) return nullptr;
     else return (it->second)();

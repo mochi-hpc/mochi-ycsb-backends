@@ -2,6 +2,7 @@
 
 #include <map>
 #include <unordered_map>
+#include <iostream>
 
 namespace mochi {
 namespace ycsb {
@@ -133,6 +134,7 @@ class TestDB : public DB {
         auto record = Record{};
         for(const auto& p : values) {
             record[p.first] = std::string(p.second->data(), p.second->size());
+            std::cout << "  " << p.first << " -> " << std::string(p.second->data(), p.second->size()) << std::endl;
         }
         m_data[entry] = std::move(record);
         return Status::OK();

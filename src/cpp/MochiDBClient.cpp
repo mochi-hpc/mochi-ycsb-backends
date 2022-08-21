@@ -1,9 +1,11 @@
 #include <gov_anl_mochi_MochiDBClient.h>
 
-#include "Status.hpp"
-#include "Map.hpp"
-#include "String.hpp"
-#include "ByteArray.hpp"
+#include "StatusHelper.hpp"
+#include "MapHelper.hpp"
+#include "ByteArrayHelper.hpp"
+#include "VectorHelper.hpp"
+
+#include "MochiYCSB.hpp"
 
 #include <map>
 #include <string>
@@ -11,215 +13,188 @@
 
 extern "C" {
 
-using mochi_key_t   = std::string;
-using mochi_value_t = std::map<std::string, std::string>;
-using mochi_db_t    = std::map<mochi_key_t, mochi_value_t>;
+namespace my = mochi::ycsb;
 
 JNIEXPORT jlong JNICALL Java_gov_anl_mochi_MochiDBClient__1init
     (JNIEnv * env, jobject self) {
-    auto impl = new mochi_db_t();
-    return reinterpret_cast<jlong>(impl);
+    // TODO pass parameters
+    auto db = my::CreateDB("test");
+    return reinterpret_cast<jlong>(db);
 }
 
 JNIEXPORT void JNICALL Java_gov_anl_mochi_MochiDBClient__1cleanup
     (JNIEnv * env, jobject self, jlong impl) {
-    auto db = reinterpret_cast<mochi_db_t*>(impl);
+    auto db = reinterpret_cast<my::DB*>(impl);
     delete db;
 }
 
 JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1read
-    (JNIEnv * env, jobject self, jlong impl, jstring table,
-     jstring key, jobject fields, jobject results) {
-    auto db = reinterpret_cast<mochi_db_t*>(impl);
+    (JNIEnv * env, jobject self, jlong impl, jstring jtable,
+     jstring jkey, jobject jfields, jobject jresults) {
+    auto db = reinterpret_cast<my::DB*>(impl);
 
-    const char* table_str = env->GetStringUTFChars(table, nullptr);
-    const char* key_str   = env->GetStringUTFChars(key, nullptr);
+    const char* table = env->GetStringUTFChars(jtable, nullptr);
+    const char* key   = env->GetStringUTFChars(jkey, nullptr);
 
-    auto full_key = std::string(table_str) + "/" + key_str;
-    auto it       = db->find(full_key);
-    auto found    = it != db->end();
+    my::DB::FieldValueList results;
+    my::Status status;
 
-    if(!found) {
-        env->ReleaseStringUTFChars(key, key_str);
-        env->ReleaseStringUTFChars(table, table_str);
-        return Status::NOT_FOUND(env);
-    }
-
-    const auto& entry       = it->second;
-    auto result_map_wrapper = Map(env, results);
-
-    if(fields == nullptr) {
-
-        for(const auto& p : entry) {
-            jstring jstring_field   = String::New(env, p.first);
-            jbyteArray jbytes_value = ByteArray::New(env, p.second);
-            result_map_wrapper.put((jobject)jstring_field, (jobject)jbytes_value);
-        }
-
-    } else {
-        auto fields_set_wrapper = Set(env, fields);
-
-        fields_set_wrapper.foreach([&entry, &result_map_wrapper, env](jobject field) {
-
-            jstring jstring_field = (jstring)field;
-            const char* field_str = env->GetStringUTFChars(jstring_field, nullptr);
-            auto it = entry.find(field_str);
-            if(it != entry.end()) {
-                jbyteArray jbytes_value = ByteArray::New(env, it->second);
-                result_map_wrapper.put(field, (jobject)jbytes_value);
-            }
-            env->ReleaseStringUTFChars(jstring_field, field_str);
+    if(jfields != nullptr) {
+        std::vector<std::string> fields;
+        my::SetHelper(env, jfields).foreach([env, &fields](jobject jfield) {
+            const char* field = env->GetStringUTFChars((jstring)jfield, nullptr);
+            fields.emplace_back(field);
+            env->ReleaseStringUTFChars((jstring)jfield, field);
         });
+        status = db->read(table, key, fields, results);
+    } else {
+        status = db->read(table, key, results);
     }
 
-    env->ReleaseStringUTFChars(key, key_str);
-    env->ReleaseStringUTFChars(table, table_str);
+    auto result_map_helper = my::MapHelper(env, jresults);
+    for(const auto& pair : results) {
+        const auto& field  = pair.first;
+        const auto& buffer = pair.second;
+        auto jfield = env->NewStringUTF(field.c_str());
+        auto jvalue = my::ByteArrayHelper::New(env, *buffer);
+        result_map_helper.put(jfield, jvalue);
+    }
 
-    return Status::OK(env);
+    env->ReleaseStringUTFChars(jkey, key);
+    env->ReleaseStringUTFChars(jtable, table);
+
+    return my::StatusHelper::New(env, status);
 }
 
 JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1scan
-    (JNIEnv * env, jobject self, jlong impl, jstring table,
-     jstring startKey, jint recordCount, jobject fields, jobject results) {
-    auto db = reinterpret_cast<mochi_db_t*>(impl);
+    (JNIEnv * env, jobject self, jlong impl, jstring jtable,
+     jstring jstartKey, jint recordCount, jobject jfields, jobject jresults) {
+    auto db = reinterpret_cast<my::DB*>(impl);
 
-    const char* table_str     = env->GetStringUTFChars(table, nullptr);
-    const char* start_key_str = env->GetStringUTFChars(startKey, nullptr);
+    const char* table    = env->GetStringUTFChars(jtable, nullptr);
+    const char* startKey = env->GetStringUTFChars(jstartKey, nullptr);
 
-    auto full_start_key = std::string(table_str) + "/" + start_key_str;
+    std::vector<my::DB::FieldValueList> results;
+    my::Status status;
 
-    jclass hash_map_class   = env->FindClass("java/util/HashMap");
-    jmethodID hash_map_init = env->GetMethodID(hash_map_class, "<init>", "()V");
-    jclass vector_class     = env->FindClass("java/util/Vector");
-    jmethodID vector_add    = env->GetMethodID(vector_class, "add", "(Ljava/lang/Object;)Z");
-
-    if(fields == nullptr) {
-        int i = 0;
-        for(auto it = db->lower_bound(full_start_key); it != db->end() && i < recordCount; ++it, ++i) {
-            jobject jhashmap = env->NewObject(hash_map_class, hash_map_init);
-            auto hash_map_wrapper = Map(env, jhashmap);
-
-            const auto& entry = it->second;
-            for(const auto& p : entry) {
-                jstring jstring_field   = String::New(env, p.first);
-                jbyteArray jbytes_value = ByteArray::New(env, p.second);
-                hash_map_wrapper.put((jobject)jstring_field, (jobject)jbytes_value);
-            }
-
-            env->CallObjectMethod(results, vector_add, jhashmap);
-        }
+    if(jfields != nullptr) {
+        std::vector<std::string> fields;
+        my::SetHelper(env, jfields).foreach([env, &fields](jobject jfield) {
+            const char* field = env->GetStringUTFChars((jstring)jfield, nullptr);
+            fields.emplace_back(field);
+            env->ReleaseStringUTFChars((jstring)jfield, field);
+        });
+        status = db->scan(table, startKey, recordCount, fields, results);
     } else {
-        int i = 0;
-
-        auto field_set_wrapper = Set(env, fields);
-
-        for(auto it = db->lower_bound(full_start_key); it != db->end() && i < recordCount; ++it, ++i) {
-            jobject jhashmap  = env->NewObject(hash_map_class, hash_map_init);
-            auto hash_map_wrapper = Map(env, jhashmap);
-            const auto& entry = it->second;
-
-            field_set_wrapper.foreach([db, env, &entry, &hash_map_wrapper](jobject field) {
-                jstring jstring_field = (jstring)field;
-                const char* field_str = env->GetStringUTFChars(jstring_field, nullptr);
-                auto it = entry.find(field_str);
-                if(it != entry.end()) {
-                    jstring jstring_field   = String::New(env, it->first);
-                    jbyteArray jbytes_value = ByteArray::New(env, it->second);
-                    hash_map_wrapper.put((jobject)jstring_field, (jobject)jbytes_value);
-                }
-                env->ReleaseStringUTFChars(jstring_field, field_str);
-            });
-
-            env->CallObjectMethod(results, vector_add, jhashmap);
-        }
+        status = db->scan(table, startKey, recordCount, results);
     }
 
-    env->ReleaseStringUTFChars(startKey, start_key_str);
-    env->ReleaseStringUTFChars(table, table_str);
+    auto result_vector_helper = my::VectorHelper(env, jresults);
+    auto field_map_helper     = my::MapHelper(env);
 
-    return Status::OK(env);
+    jclass    class_HashMap   = env->FindClass("java/util/HashMap");
+    jmethodID id_HashMap_init = env->GetMethodID(class_HashMap, "<init>", "()V");
+
+    for(const auto& record : results) {
+        auto hash_map = env->NewObject(class_HashMap, id_HashMap_init);
+        field_map_helper.m_self = hash_map;
+        for(const auto& pair : record) {
+            const auto& field  = pair.first;
+            const auto& buffer = pair.second;
+            auto jfield = env->NewStringUTF(field.c_str());
+            auto jvalue = my::ByteArrayHelper::New(env, *buffer);
+            field_map_helper.put(jfield, jvalue);
+        }
+        result_vector_helper.add(hash_map);
+    }
+
+    env->ReleaseStringUTFChars(jstartKey, startKey);
+    env->ReleaseStringUTFChars(jtable, table);
+
+    return my::StatusHelper::New(env, status);
 }
 
 JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1update
-    (JNIEnv * env, jobject self, jlong impl, jstring table,
-     jstring key, jobject values) {
-    auto db = reinterpret_cast<mochi_db_t*>(impl);
+    (JNIEnv * env, jobject self, jlong impl, jstring jtable,
+     jstring jkey, jobject jvalues) {
+    auto db = reinterpret_cast<my::DB*>(impl);
 
-    const char* table_str = env->GetStringUTFChars(table, nullptr);
-    const char* key_str   = env->GetStringUTFChars(key, nullptr);
+    const char* table = env->GetStringUTFChars(jtable, nullptr);
+    const char* key   = env->GetStringUTFChars(jkey, nullptr);
 
-    auto map_wrapper = Map(env, values);
-    auto full_key = std::string(table_str) + "/" + key_str;
-    auto& entry = (*db)[full_key];
-
-    map_wrapper.foreach([&entry, table_str, key_str, env](jobject field, jobject value) {
-            jstring     jstring_field = (jstring)field;
-            jbyteArray  jbytes_value  = (jbyteArray)value;
-            const char* str_field     = env->GetStringUTFChars(jstring_field, nullptr);
-            jbyte*      str_value     = env->GetByteArrayElements(jbytes_value, nullptr);
-            jsize       str_value_len = env->GetArrayLength(jbytes_value);
-
-            entry[std::string(str_field)] = std::string((const char*)str_value, str_value_len);
-
-            env->ReleaseByteArrayElements(jbytes_value, str_value, JNI_ABORT);
-            env->ReleaseStringUTFChars(jstring_field, str_field);
+    my::DB::FieldValueList values;
+    auto values_map_helper = my::MapHelper(env, jvalues);
+    values_map_helper.foreach([env, &values](jobject jfield, jobject jvalue) {
+        const char* field = env->GetStringUTFChars((jstring)jfield, nullptr);
+        jbyte*      value = env->GetByteArrayElements((jbyteArray)jvalue, nullptr);
+        jsize       vsize = env->GetArrayLength((jbyteArray)jvalue);
+        values.emplace_back(field,
+                            std::make_unique<my::StringView>((const char*)value, vsize));
+        env->ReleaseStringUTFChars((jstring)jfield, field);
     });
 
-    env->ReleaseStringUTFChars(key, key_str);
-    env->ReleaseStringUTFChars(table, table_str);
-    return Status::OK(env);
+    auto status = db->update(table, key, values);
+
+    unsigned i=0;
+    values_map_helper.foreach([env, &values, &i](jobject jfield, jobject jvalue) {
+        auto& buffer = values[i].second;
+        env->ReleaseByteArrayElements((jbyteArray)jvalue, (jbyte*)buffer->data(), JNI_ABORT);
+        i += 1;
+    });
+
+    env->ReleaseStringUTFChars(jkey, key);
+    env->ReleaseStringUTFChars(jtable, table);
+
+    return my::StatusHelper::New(env, status);
 }
 
 JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1insert
-    (JNIEnv * env, jobject self, jlong impl, jstring table,
-     jstring key, jobject values) {
-    auto db = reinterpret_cast<mochi_db_t*>(impl);
+    (JNIEnv * env, jobject self, jlong impl, jstring jtable,
+     jstring jkey, jobject jvalues) {
+    auto db = reinterpret_cast<my::DB*>(impl);
 
-    const char* table_str = env->GetStringUTFChars(table, nullptr);
-    const char* key_str   = env->GetStringUTFChars(key, nullptr);
+    const char* table = env->GetStringUTFChars(jtable, nullptr);
+    const char* key   = env->GetStringUTFChars(jkey, nullptr);
 
-    auto map_wrapper = Map(env, values);
-    auto full_key = std::string(table_str) + "/" + key_str;
-    auto& entry = (*db)[full_key] = mochi_value_t{};
-
-    map_wrapper.foreach([&entry, table_str, key_str, env](jobject field, jobject value) {
-            jstring     jstring_field = (jstring)field;
-            jbyteArray  jbytes_value  = (jbyteArray)value;
-            const char* str_field     = env->GetStringUTFChars(jstring_field, nullptr);
-            jbyte*      str_value     = env->GetByteArrayElements(jbytes_value, nullptr);
-            jsize       str_value_len = env->GetArrayLength(jbytes_value);
-
-            entry[std::string(str_field)] = std::string((const char*)str_value, str_value_len);
-
-            env->ReleaseByteArrayElements(jbytes_value, str_value, JNI_ABORT);
-            env->ReleaseStringUTFChars(jstring_field, str_field);
+    my::DB::FieldValueList values;
+    auto values_map_helper = my::MapHelper(env, jvalues);
+    values_map_helper.foreach([env, &values](jobject jfield, jobject jvalue) {
+        const char* field = env->GetStringUTFChars((jstring)jfield, nullptr);
+        jbyte*      value = env->GetByteArrayElements((jbyteArray)jvalue, nullptr);
+        jsize       vsize = env->GetArrayLength((jbyteArray)jvalue);
+        values.emplace_back(field,
+                            std::make_unique<my::StringView>((const char*)value, vsize));
+        env->ReleaseStringUTFChars((jstring)jfield, field);
     });
 
-    env->ReleaseStringUTFChars(key, key_str);
-    env->ReleaseStringUTFChars(table, table_str);
-    return Status::OK(env);
+    auto status = db->insert(table, key, values);
+
+    unsigned i=0;
+    values_map_helper.foreach([env, &values, &i](jobject jfield, jobject jvalue) {
+        auto& buffer = values[i].second;
+        env->ReleaseByteArrayElements((jbyteArray)jvalue, (jbyte*)buffer->data(), JNI_ABORT);
+        i += 1;
+    });
+
+    env->ReleaseStringUTFChars(jkey, key);
+    env->ReleaseStringUTFChars(jtable, table);
+
+    return my::StatusHelper::New(env, status);
 }
 
 JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1delete
-    (JNIEnv * env, jobject self, jlong impl, jstring table, jstring key) {
-    auto db = reinterpret_cast<mochi_db_t*>(impl);
+    (JNIEnv * env, jobject self, jlong impl, jstring jtable, jstring jkey) {
+    auto db = reinterpret_cast<my::DB*>(impl);
 
-    const char* table_str = env->GetStringUTFChars(table, nullptr);
-    const char* key_str   = env->GetStringUTFChars(key, nullptr);
+    const char* table = env->GetStringUTFChars(jtable, nullptr);
+    const char* key   = env->GetStringUTFChars(jkey, nullptr);
 
-    auto full_key = std::string(table_str) + "/" + key_str;
-    auto it       = db->find(full_key);
-    bool found    = it != db->end();
-    if(found)
-        db->erase(it);
+    auto status = db->erase(table, key);
 
-    env->ReleaseStringUTFChars(key, key_str);
-    env->ReleaseStringUTFChars(table, table_str);
+    env->ReleaseStringUTFChars(jkey, key);
+    env->ReleaseStringUTFChars(jtable, table);
 
-    if(found)
-        return Status::OK(env);
-    else
-        return Status::NOT_FOUND(env);
+    return my::StatusHelper::New(env, status);
 }
 
 }

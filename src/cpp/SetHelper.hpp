@@ -1,11 +1,14 @@
-#ifndef YCSB_MOCHI_SET_HPP
-#define YCSB_MOCHI_SET_HPP
+#ifndef YCSB_MOCHI_SET_HELPER_HPP
+#define YCSB_MOCHI_SET_HELPER_HPP
 
 #include <jni.h>
 #include <utility>
 #include <iostream>
 
-class Set {
+namespace mochi {
+namespace ycsb {
+
+struct SetHelper {
 
     JNIEnv*   m_env;
     jobject   m_self;
@@ -15,9 +18,7 @@ class Set {
     jmethodID m_id_Iterator_hasNext;
     jmethodID m_id_Iterator_next;
 
-    public:
-
-    Set(JNIEnv* env, jobject set)
+    SetHelper(JNIEnv* env, jobject set)
     : m_env(env)
     , m_self(set)
     , m_class_Set(env->GetObjectClass(set))
@@ -36,5 +37,8 @@ class Set {
     }
 
 };
+
+}
+}
 
 #endif
