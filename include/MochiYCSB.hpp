@@ -227,6 +227,16 @@ class DB {
 void RegisterDBType(const char* name,
                     std::function<std::unique_ptr<DB>()> create);
 
+
+/**
+ * @brief Create a DB instance from the name of a backend.
+ * If the backend doesn't exist, a null pointer will be returned.
+ *
+ * @param name Backend name
+ * @return Unique pointer to a DB instance
+ */
+std::unique_ptr<DB> CreateDB(const char* name);
+
 template<typename T>
 struct MochiDBRegistry {
 

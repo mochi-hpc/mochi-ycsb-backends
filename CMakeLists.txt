@@ -24,6 +24,7 @@ add_jar (MochiDBClient
 
 add_library (mochi-ycsb SHARED
              src/cpp/MochiDBClient.cpp
+             src/cpp/MochiYCSB.cpp
              src/cpp/TestDB.cpp)
 target_include_directories (mochi-ycsb PRIVATE ${JNI_INCLUDE_DIRS})
 target_include_directories (mochi-ycsb PUBLIC $<INSTALL_INTERFACE:include>)
