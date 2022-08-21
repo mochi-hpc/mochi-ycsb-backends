@@ -11,6 +11,7 @@
 #include <string>
 #include <unordered_map>
 #include <iostream>
+#include <dlfcn.h>
 
 extern "C" {
 
@@ -26,7 +27,32 @@ JNIEXPORT jlong JNICALL Java_gov_anl_mochi_MochiDBClient__1init
             env->ReleaseStringUTFChars((jstring)jkey, key);
             env->ReleaseStringUTFChars((jstring)jvalue, value);
     });
-    auto db = my::CreateDB("test", properties);
+    decltype(properties.begin()) it;
+    if((it = properties.find("mochi.ycsb.library")) != properties.end()) {
+        const auto& library = it->second;
+        void* handle = dlopen(library.c_str(), RTLD_NOW|RTLD_GLOBAL);
+        if(!handle) {
+            char* error = dlerror();
+            auto error_str = std::string(error);
+            free(error);
+            jclass exClass = env->FindClass("java/lang/RuntimeException");
+            env->ThrowNew(exClass, error_str.c_str());
+            return 0;
+        }
+        properties.erase(it);
+    }
+    std::string backend("test");
+    if((it = properties.find("mochi.ycsb.backend")) != properties.end()) {
+        backend = it->second;
+        properties.erase(it);
+    }
+    auto db = my::CreateDB(backend.c_str(), properties);
+    if(!db) {
+        jclass exClass = env->FindClass("java/lang/RuntimeException");
+        auto error_str = std::string("Mochi YCSB backend \"") + backend + "\" not found";
+        env->ThrowNew(exClass, error_str.c_str());
+        return 0;
+    }
     return reinterpret_cast<jlong>(db);
 }
 
