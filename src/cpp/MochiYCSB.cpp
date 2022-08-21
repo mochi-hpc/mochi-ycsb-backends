@@ -31,17 +31,17 @@ DB::~DB() = default;
 
 static std::unordered_map<
     std::string,
-    std::function<DB* ()>> dbFactory;
+    std::function<DB* (const Properties&)>> dbFactory;
 
 void RegisterDBType(const char* name,
-                    std::function<DB*()> create) {
+                    std::function<DB*(const Properties&)> create) {
     dbFactory[name] = std::move(create);
 }
 
-DB* CreateDB(const char* name) {
+DB* CreateDB(const char* name, const Properties& properties) {
     auto it = dbFactory.find(name);
     if(it == dbFactory.end()) return nullptr;
-    else return (it->second)();
+    else return (it->second)(properties);
 }
 
 }

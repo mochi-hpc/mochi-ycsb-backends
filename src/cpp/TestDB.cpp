@@ -29,6 +29,10 @@ class TestDB : public DB {
 
     public:
 
+    TestDB(const Properties& properties) {
+        (void)properties;
+    }
+
     Status read(StringView table,
                 StringView key,
                 const std::vector<std::string>& fields,

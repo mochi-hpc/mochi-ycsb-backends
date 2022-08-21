@@ -6,6 +6,7 @@
 #include <memory>
 #include <functional>
 #include <cstring>
+#include <unordered_map>
 
 namespace mochi {
 namespace ycsb {
@@ -221,6 +222,8 @@ class DB {
                          StringView key) = 0;
 };
 
+using Properties = std::unordered_map<std::string, std::string>;
+
 /**
  * @brief This function is used by the MochiDBRegistry
  * to automatically register a new DB implementation type
@@ -230,7 +233,7 @@ class DB {
  * @param create Create function
  */
 void RegisterDBType(const char* name,
-                    std::function<DB* ()> create);
+                    std::function<DB* (const Properties&)> create);
 
 
 /**
@@ -241,17 +244,19 @@ void RegisterDBType(const char* name,
  * the returned pointer when no longer needed.
  *
  * @param name Backend name
+ * @param properties Properties
  * @return A pointer to a DB instance
  */
-DB* CreateDB(const char* name);
+DB* CreateDB(const char* name,
+             const Properties& properties);
 
 template<typename T>
 struct MochiDBRegistry {
 
     MochiDBRegistry(const char* name) {
         mochi::ycsb::RegisterDBType(name,
-            []() -> mochi::ycsb::DB* {
-                return new T();
+            [](const Properties& properties) -> mochi::ycsb::DB* {
+                return new T(properties);
             });
     }
 

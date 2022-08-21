@@ -9,6 +9,7 @@
 
 #include <map>
 #include <string>
+#include <unordered_map>
 #include <iostream>
 
 extern "C" {
@@ -16,9 +17,16 @@ extern "C" {
 namespace my = mochi::ycsb;
 
 JNIEXPORT jlong JNICALL Java_gov_anl_mochi_MochiDBClient__1init
-    (JNIEnv * env, jobject self) {
-    // TODO pass parameters
-    auto db = my::CreateDB("test");
+    (JNIEnv * env, jobject self, jobject jproperty_map) {
+    std::unordered_map<std::string, std::string> properties;
+    my::MapHelper(env, jproperty_map).foreach([env, &properties](jobject jkey, jobject jvalue) {
+            const char* key   = env->GetStringUTFChars((jstring)jkey, nullptr);
+            const char* value = env->GetStringUTFChars((jstring)jvalue, nullptr);
+            properties.emplace(key, value);
+            env->ReleaseStringUTFChars((jstring)jkey, key);
+            env->ReleaseStringUTFChars((jstring)jvalue, value);
+    });
+    auto db = my::CreateDB("test", properties);
     return reinterpret_cast<jlong>(db);
 }
 

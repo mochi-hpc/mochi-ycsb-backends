@@ -24,10 +24,15 @@ public class MochiDBClient extends DB {
 
     @Override
     public void init() throws DBException {
-        this.impl = _init();
+        Set<String> propertyNames = this.getProperties().stringPropertyNames();
+        HashMap<String, String> propertyMap = new HashMap<String, String>();
+        for(String key : propertyNames) {
+            propertyMap.put(key, this.getProperties().getProperty(key));
+        }
+        this.impl = _init(propertyMap);
     }
 
-    private native long _init();
+    private native long _init(Map<String, String> properties);
 
     @Override
     public void cleanup() throws DBException {
