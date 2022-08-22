@@ -37,9 +37,13 @@ set_target_properties (ycsb-cpp-interface PROPERTIES
 configure_file (bin/ycsb-cpp-cli.in bin/ycsb-cpp-cli @ONLY USE_SOURCE_PERMISSIONS)
 configure_file (bin/ycsb-cpp.in bin/ycsb-cpp @ONLY USE_SOURCE_PERMISSIONS)
 
+add_library (YCSBCppInterface INTERFACE)
+target_include_directories (YCSBCppInterface INTERFACE $<INSTALL_INTERFACE:include>)
+
 install (TARGETS ycsb-cpp-interface
-         ARCHIVE DESTINATION lib
-         LIBRARY DESTINATION lib)
+         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+         RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install_jar (YcsbDBClient DESTINATION lib)
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/bin/ycsb-cpp-cli
                ${CMAKE_CURRENT_BINARY_DIR}/bin/ycsb-cpp
@@ -48,3 +52,16 @@ install (FILES ${CMAKE_CURRENT_BINARY_DIR}/bin/ycsb-cpp-cli
                      GROUP_EXECUTE GROUP_WRITE GROUP_READ)
 install (FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/YCSBCppInterface.hpp
          DESTINATION include)
+
+install(TARGETS
+        YCSBCppInterface
+    EXPORT YCSBCppInterfaceConfig
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+export (TARGETS
+        YCSBCppInterface
+        FILE "${CMAKE_CURRENT_BINARY_DIR}/YCSBCppInterfaceConfig.cmake")
+install (EXPORT
+         YCSBCppInterfaceConfig
+         DESTINATION "share/cmake/YCSBCppInterface")
