@@ -35,7 +35,7 @@ class TestDB : public DB {
 
     Status read(StringView table,
                 StringView key,
-                const std::vector<std::string>& fields,
+                const std::vector<StringView>& fields,
                 FieldValueList& result) const override {
         auto entry = Entry{table, key};
         auto it = m_data.find(entry);
@@ -44,7 +44,7 @@ class TestDB : public DB {
         }
         const auto& record = it->second;
         for(const auto& field : fields) {
-            auto field_pair = record.find(field);
+            auto field_pair = record.find(std::string(field.data(), field.size()));
             if(field_pair != record.end()) {
                 result.emplace_back(
                     field_pair->first,
@@ -74,7 +74,7 @@ class TestDB : public DB {
     Status scan(StringView table,
                 StringView startKey,
                 int recordCount,
-                const std::vector<std::string>& fields,
+                const std::vector<StringView>& fields,
                 std::vector<FieldValueList>& result) const override {
         auto startEntry = Entry{table, startKey};
         auto it = m_data.lower_bound(startEntry);
@@ -83,7 +83,7 @@ class TestDB : public DB {
             auto& record = it->second;
             FieldValueList field_values;
             for(const auto& field : fields) {
-                auto field_pair = record.find(field);
+                auto field_pair = record.find(std::string(field.data(), field.size()));
                 if(field_pair != record.end()) {
                     field_values.emplace_back(
                         field_pair->first,

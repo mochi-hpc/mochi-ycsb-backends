@@ -132,7 +132,7 @@ class DB {
      */
     virtual Status read(StringView table,
                         StringView key,
-                        const std::vector<std::string>& fields,
+                        const std::vector<StringView>& fields,
                         FieldValueList& result) const = 0;
 
     /**
@@ -164,7 +164,7 @@ class DB {
     virtual Status scan(StringView table,
                         StringView startKey,
                         int recordCount,
-                        const std::vector<std::string>& fields,
+                        const std::vector<StringView>& fields,
                         std::vector<FieldValueList>& result) const = 0;
 
     /**

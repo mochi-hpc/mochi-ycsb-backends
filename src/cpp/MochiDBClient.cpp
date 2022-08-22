@@ -74,13 +74,22 @@ JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1read
     my::Status status;
 
     if(jfields != nullptr) {
-        std::vector<std::string> fields;
-        my::SetHelper(env, jfields).foreach([env, &fields](jobject jfield) {
+        std::vector<my::StringView> fields;
+
+        auto set_helper = my::SetHelper(env, jfields);
+        set_helper.foreach([env, &fields](jobject jfield) {
             const char* field = env->GetStringUTFChars((jstring)jfield, nullptr);
             fields.emplace_back(field);
-            env->ReleaseStringUTFChars((jstring)jfield, field);
         });
+
         status = db->read(table, key, fields, results);
+
+        unsigned i = 0;
+        set_helper.foreach([env, &fields, &i](jobject jfield) {
+            auto& field = fields[i];
+            env->ReleaseStringUTFChars((jstring)jfield, field.data());
+            i += 1;
+        });
     } else {
         status = db->read(table, key, results);
     }
@@ -112,13 +121,22 @@ JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1scan
     my::Status status;
 
     if(jfields != nullptr) {
-        std::vector<std::string> fields;
-        my::SetHelper(env, jfields).foreach([env, &fields](jobject jfield) {
+        std::vector<my::StringView> fields;
+
+        auto set_helper = my::SetHelper(env, jfields);
+        set_helper.foreach([env, &fields](jobject jfield) {
             const char* field = env->GetStringUTFChars((jstring)jfield, nullptr);
             fields.emplace_back(field);
-            env->ReleaseStringUTFChars((jstring)jfield, field);
         });
+
         status = db->scan(table, startKey, recordCount, fields, results);
+
+        unsigned i = 0;
+        set_helper.foreach([env, &fields, &i](jobject jfield) {
+            auto& field = fields[i];
+            env->ReleaseStringUTFChars((jstring)jfield, field.data());
+            i += 1;
+        });
     } else {
         status = db->scan(table, startKey, recordCount, results);
     }
