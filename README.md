@@ -100,3 +100,14 @@ needed by ycsb-cpp-interface. Any other properties provided will be propagated
 to your database implementation in the form of an `std::unordered_map<std::string, std::string>`.
 Note that `ycsb.cpp.library` may accept a full path to your dynamic library,
 if you don't want to change the `LD_LIBRARY_PATH` environment variable.
+
+## Running YCSB with your C++ DB backend
+
+ycsb-cpp-interface provides a convenience script, `ycsb-cpp`, to run YCSB
+with your own backend. It can be used in a way similar to the original ycsb script,
+as follows.
+
+```
+$ ycsb-cpp load -p ycsb.cpp.library=libmyawesomedb.so -p ycsb.cpp.backend=myawesomedb -P workloadfile
+$ ycsb-cpp run -p ycsb.cpp.library=libmyawesomedb.so -p ycsb.cpp.backend=myawesomedb -P workloadfile
+```

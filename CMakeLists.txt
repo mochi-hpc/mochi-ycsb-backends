@@ -35,12 +35,14 @@ set_target_properties (ycsb-cpp-interface PROPERTIES
                        LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 
 configure_file (bin/ycsb-cpp-cli.in bin/ycsb-cpp-cli @ONLY USE_SOURCE_PERMISSIONS)
+configure_file (bin/ycsb-cpp.in bin/ycsb-cpp @ONLY USE_SOURCE_PERMISSIONS)
 
 install (TARGETS ycsb-cpp-interface
          ARCHIVE DESTINATION lib
          LIBRARY DESTINATION lib)
 install_jar (YcsbDBClient DESTINATION lib)
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/bin/ycsb-cpp-cli
+               ${CMAKE_CURRENT_BINARY_DIR}/bin/ycsb-cpp
          DESTINATION bin
          PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
                      GROUP_EXECUTE GROUP_WRITE GROUP_READ)
