@@ -1,9 +1,13 @@
-#include "MochiYCSB.hpp"
+/**
+ * (C) The University of Chicago
+ *
+ * See COPYRIGHT in top-level directory.
+ */
+#include "YCSBCppInterface.hpp"
 #include <unordered_map>
 #include <functional>
 #include <string>
 
-namespace mochi {
 namespace ycsb {
 
 Status::Status() = default;
@@ -44,5 +48,4 @@ DB* CreateDB(const char* name, const Properties& properties) {
     else return (it->second)(properties);
 }
 
-}
 }

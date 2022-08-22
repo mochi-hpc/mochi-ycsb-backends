@@ -1,11 +1,15 @@
-#ifndef YCSB_MOCHI_VECTOR_HELPER_HPP
-#define YCSB_MOCHI_VECTOR_HELPER_HPP
+/**
+ * (C) The University of Chicago
+ *
+ * See COPYRIGHT in top-level directory.
+ */
+#ifndef YCSB_CPP_VECTOR_HELPER_HPP
+#define YCSB_CPP_VECTOR_HELPER_HPP
 
 #include <jni.h>
 #include <utility>
 #include <iostream>
 
-namespace mochi {
 namespace ycsb {
 
 struct VectorHelper {
@@ -27,7 +31,6 @@ struct VectorHelper {
     }
 };
 
-}
 }
 
 #endif

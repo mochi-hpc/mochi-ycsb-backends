@@ -1,11 +1,15 @@
-#ifndef YCSB_MOCHI_SET_HELPER_HPP
-#define YCSB_MOCHI_SET_HELPER_HPP
+/**
+ * (C) The University of Chicago
+ *
+ * See COPYRIGHT in top-level directory.
+ */
+#ifndef YCSB_CPP_SET_HELPER_HPP
+#define YCSB_CPP_SET_HELPER_HPP
 
 #include <jni.h>
 #include <utility>
 #include <iostream>
 
-namespace mochi {
 namespace ycsb {
 
 struct SetHelper {
@@ -38,7 +42,6 @@ struct SetHelper {
 
 };
 
-}
 }
 
 #endif

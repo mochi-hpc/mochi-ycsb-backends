@@ -1,5 +1,10 @@
-#ifndef YCSB_MOCHI_MAP_HELPER_HPP
-#define YCSB_MOCHI_MAP_HELPER_HPP
+/**
+ * (C) The University of Chicago
+ *
+ * See COPYRIGHT in top-level directory.
+ */
+#ifndef YCSB_CPP_MAP_HELPER_HPP
+#define YCSB_CPP_MAP_HELPER_HPP
 
 #include "SetHelper.hpp"
 
@@ -7,7 +12,6 @@
 #include <utility>
 #include <iostream>
 
-namespace mochi {
 namespace ycsb {
 
 struct MapHelper {
@@ -48,7 +52,6 @@ struct MapHelper {
     }
 };
 
-}
 }
 
 #endif

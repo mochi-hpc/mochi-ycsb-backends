@@ -1,11 +1,15 @@
-#ifndef YCSB_MOCHI_BYTE_ARRAY_HELPER_HPP
-#define YCSB_MOCHI_BYTE_ARRAY_HELPER_HPP
+/**
+ * (C) The University of Chicago
+ *
+ * See COPYRIGHT in top-level directory.
+ */
+#ifndef YCSB_CPP_BYTE_ARRAY_HELPER_HPP
+#define YCSB_CPP_BYTE_ARRAY_HELPER_HPP
 
 #include <jni.h>
 #include <string>
-#include "MochiYCSB.hpp"
+#include "YCSBCppInterface.hpp"
 
-namespace mochi {
 namespace ycsb {
 
 struct ByteArrayHelper {
@@ -19,7 +23,6 @@ struct ByteArrayHelper {
 
 };
 
-}
 }
 
 #endif

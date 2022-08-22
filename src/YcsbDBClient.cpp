@@ -1,11 +1,16 @@
-#include <gov_anl_mochi_MochiDBClient.h>
+/**
+ * (C) The University of Chicago
+ *
+ * See COPYRIGHT in top-level directory.
+ */
+#include <cpp_ycsb_YcsbDBClient.h>
 
 #include "StatusHelper.hpp"
 #include "MapHelper.hpp"
 #include "ByteArrayHelper.hpp"
 #include "VectorHelper.hpp"
 
-#include "MochiYCSB.hpp"
+#include "YCSBCppInterface.hpp"
 
 #include <map>
 #include <string>
@@ -15,12 +20,10 @@
 
 extern "C" {
 
-namespace my = mochi::ycsb;
-
-JNIEXPORT jlong JNICALL Java_gov_anl_mochi_MochiDBClient__1init
+JNIEXPORT jlong JNICALL Java_cpp_ycsb_YcsbDBClient__1init
     (JNIEnv * env, jobject self, jobject jproperty_map) {
     std::unordered_map<std::string, std::string> properties;
-    my::MapHelper(env, jproperty_map).foreach([env, &properties](jobject jkey, jobject jvalue) {
+    ycsb::MapHelper(env, jproperty_map).foreach([env, &properties](jobject jkey, jobject jvalue) {
             const char* key   = env->GetStringUTFChars((jstring)jkey, nullptr);
             const char* value = env->GetStringUTFChars((jstring)jvalue, nullptr);
             properties.emplace(key, value);
@@ -46,7 +49,7 @@ JNIEXPORT jlong JNICALL Java_gov_anl_mochi_MochiDBClient__1init
         backend = it->second;
         properties.erase(it);
     }
-    auto db = my::CreateDB(backend.c_str(), properties);
+    auto db = ycsb::CreateDB(backend.c_str(), properties);
     if(!db) {
         jclass exClass = env->FindClass("java/lang/RuntimeException");
         auto error_str = std::string("Mochi YCSB backend \"") + backend + "\" not found";
@@ -56,27 +59,27 @@ JNIEXPORT jlong JNICALL Java_gov_anl_mochi_MochiDBClient__1init
     return reinterpret_cast<jlong>(db);
 }
 
-JNIEXPORT void JNICALL Java_gov_anl_mochi_MochiDBClient__1cleanup
+JNIEXPORT void JNICALL Java_cpp_ycsb_YcsbDBClient__1cleanup
     (JNIEnv * env, jobject self, jlong impl) {
-    auto db = reinterpret_cast<my::DB*>(impl);
+    auto db = reinterpret_cast<ycsb::DB*>(impl);
     delete db;
 }
 
-JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1read
+JNIEXPORT jobject JNICALL Java_cpp_ycsb_YcsbDBClient__1read
     (JNIEnv * env, jobject self, jlong impl, jstring jtable,
      jstring jkey, jobject jfields, jobject jresults) {
-    auto db = reinterpret_cast<my::DB*>(impl);
+    auto db = reinterpret_cast<ycsb::DB*>(impl);
 
     const char* table = env->GetStringUTFChars(jtable, nullptr);
     const char* key   = env->GetStringUTFChars(jkey, nullptr);
 
-    my::DB::Record results;
-    my::Status status;
+    ycsb::DB::Record results;
+    ycsb::Status status;
 
     if(jfields != nullptr) {
-        std::vector<my::StringView> fields;
+        std::vector<ycsb::StringView> fields;
 
-        auto set_helper = my::SetHelper(env, jfields);
+        auto set_helper = ycsb::SetHelper(env, jfields);
         set_helper.foreach([env, &fields](jobject jfield) {
             const char* field = env->GetStringUTFChars((jstring)jfield, nullptr);
             fields.emplace_back(field);
@@ -94,36 +97,36 @@ JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1read
         status = db->read(table, key, results);
     }
 
-    auto result_map_helper = my::MapHelper(env, jresults);
+    auto result_map_helper = ycsb::MapHelper(env, jresults);
     for(const auto& pair : results) {
         const auto& field  = pair.first;
         const auto& buffer = pair.second;
         auto jfield = env->NewStringUTF(field.c_str());
-        auto jvalue = my::ByteArrayHelper::New(env, *buffer);
+        auto jvalue = ycsb::ByteArrayHelper::New(env, *buffer);
         result_map_helper.put(jfield, jvalue);
     }
 
     env->ReleaseStringUTFChars(jkey, key);
     env->ReleaseStringUTFChars(jtable, table);
 
-    return my::StatusHelper::New(env, status);
+    return ycsb::StatusHelper::New(env, status);
 }
 
-JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1scan
+JNIEXPORT jobject JNICALL Java_cpp_ycsb_YcsbDBClient__1scan
     (JNIEnv * env, jobject self, jlong impl, jstring jtable,
      jstring jstartKey, jint recordCount, jobject jfields, jobject jresults) {
-    auto db = reinterpret_cast<my::DB*>(impl);
+    auto db = reinterpret_cast<ycsb::DB*>(impl);
 
     const char* table    = env->GetStringUTFChars(jtable, nullptr);
     const char* startKey = env->GetStringUTFChars(jstartKey, nullptr);
 
-    std::vector<my::DB::Record> results;
-    my::Status status;
+    std::vector<ycsb::DB::Record> results;
+    ycsb::Status status;
 
     if(jfields != nullptr) {
-        std::vector<my::StringView> fields;
+        std::vector<ycsb::StringView> fields;
 
-        auto set_helper = my::SetHelper(env, jfields);
+        auto set_helper = ycsb::SetHelper(env, jfields);
         set_helper.foreach([env, &fields](jobject jfield) {
             const char* field = env->GetStringUTFChars((jstring)jfield, nullptr);
             fields.emplace_back(field);
@@ -141,8 +144,8 @@ JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1scan
         status = db->scan(table, startKey, recordCount, results);
     }
 
-    auto result_vector_helper = my::VectorHelper(env, jresults);
-    auto field_map_helper     = my::MapHelper(env);
+    auto result_vector_helper = ycsb::VectorHelper(env, jresults);
+    auto field_map_helper     = ycsb::MapHelper(env);
 
     jclass    class_HashMap   = env->FindClass("java/util/HashMap");
     jmethodID id_HashMap_init = env->GetMethodID(class_HashMap, "<init>", "()V");
@@ -154,7 +157,7 @@ JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1scan
             const auto& field  = pair.first;
             const auto& buffer = pair.second;
             auto jfield = env->NewStringUTF(field.c_str());
-            auto jvalue = my::ByteArrayHelper::New(env, *buffer);
+            auto jvalue = ycsb::ByteArrayHelper::New(env, *buffer);
             field_map_helper.put(jfield, jvalue);
         }
         result_vector_helper.add(hash_map);
@@ -163,21 +166,21 @@ JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1scan
     env->ReleaseStringUTFChars(jstartKey, startKey);
     env->ReleaseStringUTFChars(jtable, table);
 
-    return my::StatusHelper::New(env, status);
+    return ycsb::StatusHelper::New(env, status);
 }
 
-JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1update
+JNIEXPORT jobject JNICALL Java_cpp_ycsb_YcsbDBClient__1update
     (JNIEnv * env, jobject self, jlong impl, jstring jtable,
      jstring jkey, jobject jvalues) {
-    auto db = reinterpret_cast<my::DB*>(impl);
+    auto db = reinterpret_cast<ycsb::DB*>(impl);
 
     const char* table = env->GetStringUTFChars(jtable, nullptr);
     const char* key   = env->GetStringUTFChars(jkey, nullptr);
 
-    std::vector<my::StringView> fields;
-    std::vector<my::StringView> values;
+    std::vector<ycsb::StringView> fields;
+    std::vector<ycsb::StringView> values;
 
-    auto values_map_helper = my::MapHelper(env, jvalues);
+    auto values_map_helper = ycsb::MapHelper(env, jvalues);
     values_map_helper.foreach([env, &values, &fields](jobject jfield, jobject jvalue) {
         const char* field = env->GetStringUTFChars((jstring)jfield, nullptr);
         jbyte*      value = env->GetByteArrayElements((jbyteArray)jvalue, nullptr);
@@ -200,20 +203,20 @@ JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1update
     env->ReleaseStringUTFChars(jkey, key);
     env->ReleaseStringUTFChars(jtable, table);
 
-    return my::StatusHelper::New(env, status);
+    return ycsb::StatusHelper::New(env, status);
 }
 
-JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1insert
+JNIEXPORT jobject JNICALL Java_cpp_ycsb_YcsbDBClient__1insert
     (JNIEnv * env, jobject self, jlong impl, jstring jtable,
      jstring jkey, jobject jvalues) {
-    auto db = reinterpret_cast<my::DB*>(impl);
+    auto db = reinterpret_cast<ycsb::DB*>(impl);
 
     const char* table = env->GetStringUTFChars(jtable, nullptr);
     const char* key   = env->GetStringUTFChars(jkey, nullptr);
 
-    std::vector<my::StringView> fields, values;
+    std::vector<ycsb::StringView> fields, values;
 
-    auto values_map_helper = my::MapHelper(env, jvalues);
+    auto values_map_helper = ycsb::MapHelper(env, jvalues);
     values_map_helper.foreach([env, &values, &fields](jobject jfield, jobject jvalue) {
         const char* field = env->GetStringUTFChars((jstring)jfield, nullptr);
         jbyte*      value = env->GetByteArrayElements((jbyteArray)jvalue, nullptr);
@@ -236,12 +239,12 @@ JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1insert
     env->ReleaseStringUTFChars(jkey, key);
     env->ReleaseStringUTFChars(jtable, table);
 
-    return my::StatusHelper::New(env, status);
+    return ycsb::StatusHelper::New(env, status);
 }
 
-JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1delete
+JNIEXPORT jobject JNICALL Java_cpp_ycsb_YcsbDBClient__1delete
     (JNIEnv * env, jobject self, jlong impl, jstring jtable, jstring jkey) {
-    auto db = reinterpret_cast<my::DB*>(impl);
+    auto db = reinterpret_cast<ycsb::DB*>(impl);
 
     const char* table = env->GetStringUTFChars(jtable, nullptr);
     const char* key   = env->GetStringUTFChars(jkey, nullptr);
@@ -251,7 +254,7 @@ JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1delete
     env->ReleaseStringUTFChars(jkey, key);
     env->ReleaseStringUTFChars(jtable, table);
 
-    return my::StatusHelper::New(env, status);
+    return ycsb::StatusHelper::New(env, status);
 }
 
 }

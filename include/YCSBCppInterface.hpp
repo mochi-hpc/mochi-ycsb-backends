@@ -8,7 +8,6 @@
 #include <cstring>
 #include <unordered_map>
 
-namespace mochi {
 namespace ycsb {
 
 /**
@@ -254,20 +253,19 @@ DB* CreateDB(const char* name,
              const Properties& properties);
 
 template<typename T>
-struct MochiDBRegistry {
+struct YcsbDBRegistry {
 
-    MochiDBRegistry(const char* name) {
-        mochi::ycsb::RegisterDBType(name,
-            [](const Properties& properties) -> mochi::ycsb::DB* {
+    YcsbDBRegistry(const char* name) {
+        RegisterDBType(name,
+            [](const Properties& properties) -> DB* {
                 return new T(properties);
             });
     }
 
 };
 
-#define MOCHI_YCSB_REGISTER_DB_TYPE(__name__, __type__) \
-    static ::mochi::ycsb::MochiDBRegistry<__type__> __name__##_registry_(#__name__)
+#define YCSB_CPP_REGISTER_DB_TYPE(__name__, __type__) \
+    static ::ycsb::YcsbDBRegistry<__type__> __name__##_registry_(#__name__)
 
-}
 }
 #endif

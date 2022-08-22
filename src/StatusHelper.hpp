@@ -1,10 +1,14 @@
-#ifndef YCSB_MOCHI_STATUS_HELPER_HPP
-#define YCSB_MOCHI_STATUS_HELPER_HPP
+/**
+ * (C) The University of Chicago
+ *
+ * See COPYRIGHT in top-level directory.
+ */
+#ifndef YCSB_CPP_STATUS_HELPER_HPP
+#define YCSB_CPP_STATUS_HELPER_HPP
 
 #include <jni.h>
-#include "MochiYCSB.hpp"
+#include "YCSBCppInterface.hpp"
 
-namespace mochi {
 namespace ycsb {
 
 struct StatusHelper {
@@ -19,7 +23,6 @@ struct StatusHelper {
     }
 };
 
-}
 }
 
 #endif

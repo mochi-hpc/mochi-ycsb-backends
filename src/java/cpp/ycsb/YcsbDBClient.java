@@ -4,7 +4,7 @@
  * See COPYRIGHT in top-level directory.
  */
 
-package gov.anl.mochi;
+package cpp.ycsb;
 
 import site.ycsb.*;
 
@@ -14,12 +14,12 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
 
-public class MochiDBClient extends DB {
+public class YcsbDBClient extends DB {
 
     private long impl; /* pointer to C++ class */
 
     static {
-        System.loadLibrary("mochi-ycsb");
+        System.loadLibrary("ycsb-cpp-interface");
     }
 
     @Override

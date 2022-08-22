@@ -1,9 +1,13 @@
-#include "MochiYCSB.hpp"
+/**
+ * (C) The University of Chicago
+ *
+ * See COPYRIGHT in top-level directory.
+ */
+#include "YCSBCppInterface.hpp"
 
 #include <map>
 #include <unordered_map>
 
-namespace mochi {
 namespace ycsb {
 
 class TestDB : public DB {
@@ -163,7 +167,6 @@ class TestDB : public DB {
 
 };
 
-MOCHI_YCSB_REGISTER_DB_TYPE(test, TestDB);
+YCSB_CPP_REGISTER_DB_TYPE(test, TestDB);
 
-}
 }
