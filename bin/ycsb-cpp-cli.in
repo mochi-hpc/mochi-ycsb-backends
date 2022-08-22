@@ -9,4 +9,4 @@ export CLASSPATH=$CLASSPATH:"$YCSB_ROOT/lib/*"
 export CLASSPATH=$CLASSPATH:"$PREFIX/lib/*"
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:"$PREFIX/lib"
 
-java site.ycsb.CommandLine -db gov.anl.mochi.MochiDBClient $@
+java site.ycsb.CommandLine -db cpp.ycsb.YcsbDBClient $@
