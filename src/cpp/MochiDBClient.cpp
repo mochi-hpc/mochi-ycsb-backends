@@ -70,7 +70,7 @@ JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1read
     const char* table = env->GetStringUTFChars(jtable, nullptr);
     const char* key   = env->GetStringUTFChars(jkey, nullptr);
 
-    my::DB::FieldValueList results;
+    my::DB::Record results;
     my::Status status;
 
     if(jfields != nullptr) {
@@ -117,7 +117,7 @@ JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1scan
     const char* table    = env->GetStringUTFChars(jtable, nullptr);
     const char* startKey = env->GetStringUTFChars(jstartKey, nullptr);
 
-    std::vector<my::DB::FieldValueList> results;
+    std::vector<my::DB::Record> results;
     my::Status status;
 
     if(jfields != nullptr) {

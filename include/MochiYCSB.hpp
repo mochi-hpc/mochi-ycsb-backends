@@ -118,11 +118,11 @@ class DB {
 
     virtual ~DB();
 
-    using FieldValueList = std::vector<std::pair<std::string, std::unique_ptr<Buffer>>>;
+    using Record = std::vector<std::pair<std::string, std::unique_ptr<Buffer>>>;
 
     /**
      * Read a record from the database. Each field/value pair from the result
-     * will be stored in the result vector.
+     * will be stored in the resulting Record.
      *
      * @param table The name of the table
      * @param key The record key of the record to read
@@ -133,11 +133,11 @@ class DB {
     virtual Status read(StringView table,
                         StringView key,
                         const std::vector<StringView>& fields,
-                        FieldValueList& result) const = 0;
+                        Record& result) const = 0;
 
     /**
      * Read a record from the database. All the field/value pairs from the result
-     * will be stored in a vector.
+     * will be stored in the Record result.
      *
      * @param table The name of the table
      * @param key The record key of the record to read
@@ -146,7 +146,7 @@ class DB {
      */
     virtual Status read(StringView table,
                         StringView key,
-                        FieldValueList& result) const = 0;
+                        Record& result) const = 0;
 
     /**
      * Perform a range scan for a set of records in the database.
@@ -157,37 +157,35 @@ class DB {
      * @param startkey The record key of the first record to read
      * @param recordCount The number of records to read
      * @param fields The list of fields to read
-     * @param result A vector of FieldValueList, where each FieldValueList
-     *               is a list of field/value pairs for one record
+     * @param result A vector of Records
      * @return The result of the operation
      */
     virtual Status scan(StringView table,
                         StringView startKey,
                         int recordCount,
                         const std::vector<StringView>& fields,
-                        std::vector<FieldValueList>& result) const = 0;
+                        std::vector<Record>& result) const = 0;
 
     /**
      * Perform a range scan for a set of records in the database.
      * All the field/value pairs from the result will be stored
-     * in a std::unordered_map.
+     * in a vector of Records.
      *
      * @param table The name of the table
      * @param startkey The record key of the first record to read
      * @param recordcount The number of records to read
-     * @param result A vector of FieldValueList, where each FieldValueList
-     *               is a list of field/value pairs for one record
+     * @param result A vector of Records
      * @return The result of the operation
      */
     virtual Status scan(StringView table,
                         StringView startKey,
                         int recordCount,
-                        std::vector<FieldValueList>& result) const = 0;
+                        std::vector<Record>& result) const = 0;
 
     /**
-     * Update a record in the database. Any field/value pairs in the specified
-     * values std::unordered_map will be written into the record with the specified
-     * record key, overwriting any existing values with the same field name.
+     * Update a record in the database. The fields and values vectors
+     * are guaranteed to have the same size and provide the mapping from
+     * fields to values to be updated.
      *
      * @param table The name of the table
      * @param key The record key of the record to write
@@ -201,8 +199,9 @@ class DB {
                           const std::vector<StringView>& values) = 0;
 
     /**
-     * Insert a record in the database. Any field/value pairs in the specified
-     * FieldValueList will be written into the record with the specified record key.
+     * Insert a record in the database. The fields and values vectors
+     * are guaranteed to have the same size and provide the mapping from
+     * fields to values to store.
      *
      * @param table The name of the table
      * @param key The record key of the record to insert

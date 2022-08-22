@@ -36,7 +36,7 @@ class TestDB : public DB {
     Status read(StringView table,
                 StringView key,
                 const std::vector<StringView>& fields,
-                FieldValueList& result) const override {
+                DB::Record& result) const override {
         auto entry = Entry{table, key};
         auto it = m_data.find(entry);
         if(it == m_data.end()) {
@@ -56,7 +56,7 @@ class TestDB : public DB {
 
     Status read(StringView table,
                 StringView key,
-                FieldValueList& result) const override {
+                DB::Record& result) const override {
         auto entry = Entry{table, key};
         auto it = m_data.find(entry);
         if(it == m_data.end()) {
@@ -75,22 +75,22 @@ class TestDB : public DB {
                 StringView startKey,
                 int recordCount,
                 const std::vector<StringView>& fields,
-                std::vector<FieldValueList>& result) const override {
+                std::vector<DB::Record>& result) const override {
         auto startEntry = Entry{table, startKey};
         auto it = m_data.lower_bound(startEntry);
         unsigned i = 0;
         for(unsigned i = 0; i < recordCount && it != m_data.end(); ++i, ++it) {
             auto& record = it->second;
-            FieldValueList field_values;
+            DB::Record result_record;
             for(const auto& field : fields) {
                 auto field_pair = record.find(std::string(field.data(), field.size()));
                 if(field_pair != record.end()) {
-                    field_values.emplace_back(
+                    result_record.emplace_back(
                         field_pair->first,
                         std::make_unique<StringBuffer>(field_pair->second));
                 }
             }
-            result.push_back(std::move(field_values));
+            result.push_back(std::move(result_record));
         }
         return Status::OK();
     }
@@ -98,19 +98,19 @@ class TestDB : public DB {
     Status scan(StringView table,
                 StringView startKey,
                 int recordCount,
-                std::vector<FieldValueList>& result) const override {
+                std::vector<DB::Record>& result) const override {
         auto startEntry = Entry{table, startKey};
         auto it = m_data.lower_bound(startEntry);
         unsigned i = 0;
         for(unsigned i = 0; i < recordCount && it != m_data.end(); ++i, ++it) {
             auto& record = it->second;
-            FieldValueList field_values;
+            DB::Record result_record;
             for(auto& field_pair : record) {
-                field_values.emplace_back(
+                result_record.emplace_back(
                     field_pair.first,
                     std::make_unique<StringBuffer>(field_pair.second));
             }
-            result.push_back(std::move(field_values));
+            result.push_back(std::move(result_record));
         }
         return Status::OK();
     }
