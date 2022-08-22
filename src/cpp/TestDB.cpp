@@ -117,26 +117,34 @@ class TestDB : public DB {
 
     Status update(StringView table,
                   StringView key,
-                  const FieldValueList& values) override {
+                  const std::vector<StringView>& fields,
+                  const std::vector<StringView>& values) override {
         auto entry = Entry{table, key};
         auto it = m_data.find(entry);
         if(it == m_data.end()) {
             return Status{"NOT_FOUND", "The requested record was not found."};
         }
         auto& record = it->second;
-        for(const auto& p : values) {
-            record[p.first] = std::string(p.second->data(), p.second->size());
+        unsigned i = 0;
+        for(unsigned i=0; i < fields.size(); i++) {
+            const auto& field = fields[i];
+            const auto& value = values[i];
+            record[(std::string)field] = value;
         }
         return Status::OK();
     }
 
     Status insert(StringView table,
                   StringView key,
-                  const FieldValueList& values) override {
+                  const std::vector<StringView>& fields,
+                  const std::vector<StringView>& values) override {
         auto entry = Entry{table, key};
         auto record = Record{};
-        for(const auto& p : values) {
-            record[p.first] = std::string(p.second->data(), p.second->size());
+        unsigned i = 0;
+        for(unsigned i=0; i < fields.size(); i++) {
+            const auto& field = fields[i];
+            const auto& value = values[i];
+            record[(std::string)field] = value;
         }
         m_data[entry] = std::move(record);
         return Status::OK();

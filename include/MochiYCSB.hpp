@@ -191,12 +191,14 @@ class DB {
      *
      * @param table The name of the table
      * @param key The record key of the record to write
-     * @param values An std::unordered_map of field/value pairs to update in the record
+     * @param fields Fields to write
+     * @param values Values corresponding to each field
      * @return The result of the operation
      */
     virtual Status update(StringView table,
                           StringView key,
-                          const FieldValueList& values) = 0;
+                          const std::vector<StringView>& fields,
+                          const std::vector<StringView>& values) = 0;
 
     /**
      * Insert a record in the database. Any field/value pairs in the specified
@@ -204,12 +206,14 @@ class DB {
      *
      * @param table The name of the table
      * @param key The record key of the record to insert
-     * @param values A list of field/value pairs to insert in the record
+     * @param fields Fields to write
+     * @param values Values corresponding to each field
      * @return The result of the operation
      */
     virtual Status insert(StringView table,
                           StringView key,
-                          const FieldValueList& values) = 0;
+                          const std::vector<StringView>& fields,
+                          const std::vector<StringView>& values) = 0;
 
     /**
      * Delete a record from the database.

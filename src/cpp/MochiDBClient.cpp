@@ -174,23 +174,26 @@ JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1update
     const char* table = env->GetStringUTFChars(jtable, nullptr);
     const char* key   = env->GetStringUTFChars(jkey, nullptr);
 
-    my::DB::FieldValueList values;
+    std::vector<my::StringView> fields;
+    std::vector<my::StringView> values;
+
     auto values_map_helper = my::MapHelper(env, jvalues);
-    values_map_helper.foreach([env, &values](jobject jfield, jobject jvalue) {
+    values_map_helper.foreach([env, &values, &fields](jobject jfield, jobject jvalue) {
         const char* field = env->GetStringUTFChars((jstring)jfield, nullptr);
         jbyte*      value = env->GetByteArrayElements((jbyteArray)jvalue, nullptr);
         jsize       vsize = env->GetArrayLength((jbyteArray)jvalue);
-        values.emplace_back(field,
-                            std::make_unique<my::StringView>((const char*)value, vsize));
-        env->ReleaseStringUTFChars((jstring)jfield, field);
+        fields.emplace_back(field);
+        values.emplace_back((const char*)value, vsize);
     });
 
-    auto status = db->update(table, key, values);
+    auto status = db->update(table, key, fields, values);
 
     unsigned i=0;
-    values_map_helper.foreach([env, &values, &i](jobject jfield, jobject jvalue) {
-        auto& buffer = values[i].second;
-        env->ReleaseByteArrayElements((jbyteArray)jvalue, (jbyte*)buffer->data(), JNI_ABORT);
+    values_map_helper.foreach([env, &values, &fields, &i](jobject jfield, jobject jvalue) {
+        auto& value = values[i];
+        auto& field = fields[i];
+        env->ReleaseByteArrayElements((jbyteArray)jvalue, (jbyte*)value.data(), JNI_ABORT);
+        env->ReleaseStringUTFChars((jstring)jfield, field.data());
         i += 1;
     });
 
@@ -208,23 +211,25 @@ JNIEXPORT jobject JNICALL Java_gov_anl_mochi_MochiDBClient__1insert
     const char* table = env->GetStringUTFChars(jtable, nullptr);
     const char* key   = env->GetStringUTFChars(jkey, nullptr);
 
-    my::DB::FieldValueList values;
+    std::vector<my::StringView> fields, values;
+
     auto values_map_helper = my::MapHelper(env, jvalues);
-    values_map_helper.foreach([env, &values](jobject jfield, jobject jvalue) {
+    values_map_helper.foreach([env, &values, &fields](jobject jfield, jobject jvalue) {
         const char* field = env->GetStringUTFChars((jstring)jfield, nullptr);
         jbyte*      value = env->GetByteArrayElements((jbyteArray)jvalue, nullptr);
         jsize       vsize = env->GetArrayLength((jbyteArray)jvalue);
-        values.emplace_back(field,
-                            std::make_unique<my::StringView>((const char*)value, vsize));
-        env->ReleaseStringUTFChars((jstring)jfield, field);
+        fields.emplace_back(field);
+        values.emplace_back((const char*)value, vsize);
     });
 
-    auto status = db->insert(table, key, values);
+    auto status = db->insert(table, key, fields, values);
 
     unsigned i=0;
-    values_map_helper.foreach([env, &values, &i](jobject jfield, jobject jvalue) {
-        auto& buffer = values[i].second;
-        env->ReleaseByteArrayElements((jbyteArray)jvalue, (jbyte*)buffer->data(), JNI_ABORT);
+    values_map_helper.foreach([env, &values, &fields, &i](jobject jfield, jobject jvalue) {
+        auto& value = values[i];
+        auto& field = fields[i];
+        env->ReleaseByteArrayElements((jbyteArray)jvalue, (jbyte*)value.data(), JNI_ABORT);
+        env->ReleaseStringUTFChars((jstring)jfield, field.data());
         i += 1;
     });
 
