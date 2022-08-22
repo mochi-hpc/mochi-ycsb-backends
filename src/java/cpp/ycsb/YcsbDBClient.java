@@ -50,7 +50,8 @@ public class YcsbDBClient extends DB {
         for(Map.Entry<String, byte[]> entry : r.entrySet()) {
             result.put(entry.getKey(), new ByteArrayByteIterator(entry.getValue()));
         }
-        return status;
+        if(status.getName().equals("OK")) return Status.OK;
+        else return status;
     }
 
     private native Status _read(long impl, final String table, final String key, final Set<String> fields,
@@ -68,7 +69,8 @@ public class YcsbDBClient extends DB {
             }
             result.add(current_hash_map);
         }
-        return status;
+        if(status.getName().equals("OK")) return Status.OK;
+        else return status;
     }
 
     private native Status _scan(long impl, final String table, final String startkey, final int recordcount, final Set<String> fields,
@@ -80,7 +82,9 @@ public class YcsbDBClient extends DB {
         for(Map.Entry<String, ByteIterator> entry : values.entrySet()) {
             fields.put(entry.getKey(), entry.getValue().toArray());
         }
-        return this._update(this.impl, table, key, fields);
+        Status status = this._update(this.impl, table, key, fields);
+        if(status.getName().equals("OK")) return Status.OK;
+        else return status;
     }
 
     private native Status _update(long impl, final String table, final String key, final Map<String, byte[]> values);
@@ -91,14 +95,18 @@ public class YcsbDBClient extends DB {
         for(Map.Entry<String, ByteIterator> entry : values.entrySet()) {
             fields.put(entry.getKey(), entry.getValue().toArray());
         }
-        return this._insert(this.impl, table, key, fields);
+        Status status = this._insert(this.impl, table, key, fields);
+        if(status.getName().equals("OK")) return Status.OK;
+        else return status;
     }
 
     private native Status _insert(long impl, final String table, final String key, final Map<String, byte[]> values);
 
     @Override
     public Status delete(final String table, final String key) {
-        return this._delete(this.impl, table, key);
+        Status status = this._delete(this.impl, table, key);
+        if(status.getName().equals("OK")) return Status.OK;
+        else return status;
     }
 
     private native Status _delete(long impl, final String table, final String key);
