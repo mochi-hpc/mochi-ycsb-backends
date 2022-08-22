@@ -31,7 +31,7 @@ JNIEXPORT jlong JNICALL Java_cpp_ycsb_YcsbDBClient__1init
             env->ReleaseStringUTFChars((jstring)jvalue, value);
     });
     decltype(properties.begin()) it;
-    if((it = properties.find("mochi.ycsb.library")) != properties.end()) {
+    if((it = properties.find("ycsb.cpp.library")) != properties.end()) {
         const auto& library = it->second;
         void* handle = dlopen(library.c_str(), RTLD_NOW|RTLD_GLOBAL);
         if(!handle) {
@@ -45,7 +45,7 @@ JNIEXPORT jlong JNICALL Java_cpp_ycsb_YcsbDBClient__1init
         properties.erase(it);
     }
     std::string backend("test");
-    if((it = properties.find("mochi.ycsb.backend")) != properties.end()) {
+    if((it = properties.find("ycsb.cpp.backend")) != properties.end()) {
         backend = it->second;
         properties.erase(it);
     }
