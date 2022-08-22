@@ -1,15 +1,50 @@
 # YCSB C++ Interface
 
-This repository contains a Java/C++ library enabling the use of C++
-to write DB backends for the [YCSB benchmark](https://github.com/brianfrankcooper/YCSB).
+[YCSB](https://github.com/brianfrankcooper/YCSB) is one of the most popular Cloud
+storage benchmark. However it is written in Java, forcing databases implemented
+in other languages to provide a Java wrapper. While [YCSC-cpp](https://github.com/ls4154/YCSB-cpp)
+provides a reimplementation of YCSB in C++, to date it only supports three backends, as
+opposed to 45 for the original YCSB.
+
+[ycsb-cpp-interface](https://github.com/mochi-hpc/ycsb-cpp-interface)
+takes a different approach from YCSB-cpp, providing a Java/C++ library
+that enables the use of C++ to write DB backends for YCSB.
+
+ycsb-cpp-inteface works in a modular way, dynamically loading your C++ database
+implementation from a library using a factory pattern.
 
 ## Installing
+
+### Building manually
+
+To build this repository from source, you will first need to have
+its dependencies installed and findable by CMake. These dependencies
+include:
+- Java Development Kit (e.g., OpenJDK)
+- YCSB
+- cmake
+
+Make sure to set the `JAVA_HOME` environment variable
+to point to where your JDK is installed so that CMake can find it.
+It is recommended to install a distribution of YCSB, rather than
+the source.
+
+You can then build the source contained in this repository as follows.
+
+```
+$ mkdir build
+$ cd build
+$ cmake .. -DYCSB_ROOT=<path/to/where/ycsb/is/installed> \
+           -DCMAKE_INSTALL_PREFIX=<install/prefix>
+$ make
+```
 
 ### Installing using Spack
 
 You can install this library using [Spack](https://spack.io/).
-The `ycsb-cpp-interface` Spack package is available via the Mochi repository,
-which can be installed as follows.
+The `ycsb-cpp-interface` Spack package is available via the
+[Mochi repository](https://github.com/mochi-hpc/mochi-spack-packages),
+which can be added to Spack as follows.
 
 ```
 $ git clone https://github.com/mochi-hpc/mochi-spack-packages.git
@@ -23,28 +58,7 @@ you can install `ycsb-cpp-interface` as follows.
 $ spack install ycsb-cpp-interface
 ```
 
-### Building manually
-
-To build this repository from source, you will first need to have
-its dependencies installed and findable by CMake. These dependencies
-include:
-- Java Development Kit (e.g., OpenJDK)
-- YCSB
-- cmake
-
-Make sure to set the `JAVA_HOME` environment variable
-to point to where your JDK is installed.
-
-You can then build the source contained in this repository as follows.
-
-```
-$ mkdir build
-$ cd build
-$ cmake .. -DYCSB_ROOT=<path/to/where/ycsb/is/installed>
-$ make
-```
-
-## Testing the installation
+## Testing
 
 If you have installed ycsb-cpp-interface with Spack, make sure that
 the package is loaded (`spack load ycsb-cpp-interface`), then you
@@ -61,7 +75,7 @@ You will end up in YCBS's CLI, with the YcsbDBClient loaded as the
 DB backend, itself using a test implementation of an in-memory database
 with which you can interact (type `help` to see a list of available commands).
 
-# Writing your own C++ DB backend
+## Writing your own C++ DB backend
 
 ycsb-cpp-interface provides a header file, `YCSBCppInterface.hpp`, with
 a `ycsb::DB` abstract class. To implement your own C++ backend database,
