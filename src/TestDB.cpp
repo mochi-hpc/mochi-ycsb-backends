@@ -33,6 +33,10 @@ class TestDB : public DB {
 
     public:
 
+    static DB* New(const Properties& properties) {
+        return new TestDB(properties);
+    }
+
     TestDB(const Properties& properties) {
         (void)properties;
     }

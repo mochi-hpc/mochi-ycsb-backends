@@ -256,10 +256,7 @@ template<typename T>
 struct YcsbDBRegistry {
 
     YcsbDBRegistry(const char* name) {
-        RegisterDBType(name,
-            [](const Properties& properties) -> DB* {
-                return new T(properties);
-            });
+        RegisterDBType(name, T::New);
     }
 
 };
