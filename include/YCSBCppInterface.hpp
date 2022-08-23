@@ -65,6 +65,9 @@ class StringBuffer : public Buffer {
 
     public:
 
+    StringBuffer(const char* data, size_t size)
+    : m_str(data, size) {}
+
     StringBuffer(std::string str)
     : m_str(std::move(str)) {}
 
