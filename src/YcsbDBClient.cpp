@@ -37,7 +37,6 @@ JNIEXPORT jlong JNICALL Java_cpp_ycsb_YcsbDBClient__1init
         if(!handle) {
             char* error = dlerror();
             auto error_str = std::string(error);
-            free(error);
             jclass exClass = env->FindClass("java/lang/RuntimeException");
             env->ThrowNew(exClass, error_str.c_str());
             return 0;
@@ -62,7 +61,7 @@ JNIEXPORT jlong JNICALL Java_cpp_ycsb_YcsbDBClient__1init
 JNIEXPORT void JNICALL Java_cpp_ycsb_YcsbDBClient__1cleanup
     (JNIEnv * env, jobject self, jlong impl) {
     auto db = reinterpret_cast<ycsb::DB*>(impl);
-    delete db;
+    if(db) delete db;
 }
 
 JNIEXPORT jobject JNICALL Java_cpp_ycsb_YcsbDBClient__1read
