@@ -51,7 +51,7 @@ JNIEXPORT jlong JNICALL Java_cpp_ycsb_YcsbDBClient__1init
     auto db = ycsb::CreateDB(backend.c_str(), properties);
     if(!db) {
         jclass exClass = env->FindClass("java/lang/RuntimeException");
-        auto error_str = std::string("Mochi YCSB backend \"") + backend + "\" not found";
+        auto error_str = std::string("Unable to create YCSB backend \"") + backend + "\"";
         env->ThrowNew(exClass, error_str.c_str());
         return 0;
     }
