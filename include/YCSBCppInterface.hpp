@@ -39,6 +39,12 @@ class Buffer {
 
     public:
 
+    Buffer() = default;
+    Buffer(const Buffer&) = default;
+    Buffer(Buffer&&) = default;
+    Buffer& operator=(const Buffer&) = default;
+    Buffer& operator=(Buffer&&) = default;
+
     /**
      * @brief Destructor.
      */
