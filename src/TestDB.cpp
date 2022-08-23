@@ -43,7 +43,7 @@ class TestDB : public DB {
 
     Status read(StringView table,
                 StringView key,
-                const std::vector<StringView>& fields,
+                const std::unordered_set<StringView>& fields,
                 DB::Record& result) const override {
         auto entry = Entry{table, key};
         auto it = m_data.find(entry);
@@ -54,7 +54,7 @@ class TestDB : public DB {
         for(const auto& field : fields) {
             auto field_pair = record.find(std::string(field.data(), field.size()));
             if(field_pair != record.end()) {
-                result.emplace_back(
+                result.emplace(
                     field_pair->first,
                     std::make_unique<StringBuffer>(field_pair->second));
             }
@@ -72,7 +72,7 @@ class TestDB : public DB {
         }
         const auto& record = it->second;
         for(const auto& p : record) {
-            result.emplace_back(
+            result.emplace(
                 p.first,
                 std::make_unique<StringBuffer>(p.second));
         }
@@ -82,7 +82,7 @@ class TestDB : public DB {
     Status scan(StringView table,
                 StringView startKey,
                 int recordCount,
-                const std::vector<StringView>& fields,
+                const std::unordered_set<StringView>& fields,
                 std::vector<DB::Record>& result) const override {
         auto startEntry = Entry{table, startKey};
         auto it = m_data.lower_bound(startEntry);
@@ -93,7 +93,7 @@ class TestDB : public DB {
             for(const auto& field : fields) {
                 auto field_pair = record.find(std::string(field.data(), field.size()));
                 if(field_pair != record.end()) {
-                    result_record.emplace_back(
+                    result_record.emplace(
                         field_pair->first,
                         std::make_unique<StringBuffer>(field_pair->second));
                 }
@@ -114,7 +114,7 @@ class TestDB : public DB {
             auto& record = it->second;
             DB::Record result_record;
             for(auto& field_pair : record) {
-                result_record.emplace_back(
+                result_record.emplace(
                     field_pair.first,
                     std::make_unique<StringBuffer>(field_pair.second));
             }
@@ -125,8 +125,7 @@ class TestDB : public DB {
 
     Status update(StringView table,
                   StringView key,
-                  const std::vector<StringView>& fields,
-                  const std::vector<StringView>& values) override {
+                  const RecordView& record_update) override {
         auto entry = Entry{table, key};
         auto it = m_data.find(entry);
         if(it == m_data.end()) {
@@ -134,9 +133,9 @@ class TestDB : public DB {
         }
         auto& record = it->second;
         unsigned i = 0;
-        for(unsigned i=0; i < fields.size(); i++) {
-            const auto& field = fields[i];
-            const auto& value = values[i];
+        for(auto& p : record_update) {
+            const auto& field = p.first;
+            const auto& value = p.second;
             record[(std::string)field] = value;
         }
         return Status::OK();
@@ -144,14 +143,13 @@ class TestDB : public DB {
 
     Status insert(StringView table,
                   StringView key,
-                  const std::vector<StringView>& fields,
-                  const std::vector<StringView>& values) override {
+                  const RecordView& record_update) override {
         auto entry = Entry{table, key};
         auto record = Record{};
         unsigned i = 0;
-        for(unsigned i=0; i < fields.size(); i++) {
-            const auto& field = fields[i];
-            const auto& value = values[i];
+        for(auto& p : record_update) {
+            const auto& field = p.first;
+            const auto& value = p.second;
             record[(std::string)field] = value;
         }
         m_data[entry] = std::move(record);

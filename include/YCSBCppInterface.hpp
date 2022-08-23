@@ -7,6 +7,7 @@
 #include <functional>
 #include <cstring>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace ycsb {
 
@@ -109,6 +110,25 @@ class StringView : public Buffer {
     operator std::string() const {
         return std::string(m_data, m_size);
     }
+
+    bool operator==(const StringView& other) const {
+        return size() == other.size()
+            && std::memcmp(data(), other.data(), size()) == 0;
+    }
+
+    struct Hash {
+
+        unsigned long operator()(const StringView& sw) const {
+            unsigned long hash = 5381;
+            int c;
+            const char* data = sw.data();
+            size_t     size  = sw.size();
+            for(unsigned i=0; i < sw.size(); i++)
+                hash = ((hash << 5) + hash) + data[i];
+            return hash;
+        }
+
+    };
 };
 
 /**
@@ -120,7 +140,8 @@ class DB {
 
     virtual ~DB();
 
-    using Record = std::vector<std::pair<std::string, std::unique_ptr<Buffer>>>;
+    using Record = std::unordered_map<std::string, std::unique_ptr<Buffer>>;
+    using RecordView = std::unordered_map<StringView, StringView>;
 
     /**
      * Read a record from the database. Each field/value pair from the result
@@ -128,13 +149,13 @@ class DB {
      *
      * @param table The name of the table
      * @param key The record key of the record to read
-     * @param fields The list of fields to read
-     * @param result A list of field/value pairs for the result
-     * @return The result of the operation
+     * @param fields The set of fields to read
+     * @param result A Record containing the result
+     * @return The result status of the operation
      */
     virtual Status read(StringView table,
                         StringView key,
-                        const std::vector<StringView>& fields,
+                        const std::unordered_set<StringView>& fields,
                         Record& result) const = 0;
 
     /**
@@ -143,8 +164,8 @@ class DB {
      *
      * @param table The name of the table
      * @param key The record key of the record to read
-     * @param result A list of field/value pairs for the result
-     * @return The result of the operation
+     * @param result A Record containing the result
+     * @return The result status of the operation
      */
     virtual Status read(StringView table,
                         StringView key,
@@ -152,32 +173,28 @@ class DB {
 
     /**
      * Perform a range scan for a set of records in the database.
-     * Each field/value pair from the result will be stored
-     * in a vector.
      *
      * @param table The name of the table
      * @param startkey The record key of the first record to read
      * @param recordCount The number of records to read
-     * @param fields The list of fields to read
+     * @param fields The set of fields to read
      * @param result A vector of Records
-     * @return The result of the operation
+     * @return The status of the operation
      */
     virtual Status scan(StringView table,
                         StringView startKey,
                         int recordCount,
-                        const std::vector<StringView>& fields,
+                        const std::unordered_set<StringView>& fields,
                         std::vector<Record>& result) const = 0;
 
     /**
      * Perform a range scan for a set of records in the database.
-     * All the field/value pairs from the result will be stored
-     * in a vector of Records.
      *
      * @param table The name of the table
      * @param startkey The record key of the first record to read
      * @param recordcount The number of records to read
      * @param result A vector of Records
-     * @return The result of the operation
+     * @return The status of the operation
      */
     virtual Status scan(StringView table,
                         StringView startKey,
@@ -191,30 +208,24 @@ class DB {
      *
      * @param table The name of the table
      * @param key The record key of the record to write
-     * @param fields Fields to write
-     * @param values Values corresponding to each field
-     * @return The result of the operation
+     * @param record Record containing the fields and values to update
+     * @return The status of the operation
      */
     virtual Status update(StringView table,
                           StringView key,
-                          const std::vector<StringView>& fields,
-                          const std::vector<StringView>& values) = 0;
+                          const RecordView& record) = 0;
 
     /**
-     * Insert a record in the database. The fields and values vectors
-     * are guaranteed to have the same size and provide the mapping from
-     * fields to values to store.
+     * Insert a record in the database.
      *
      * @param table The name of the table
      * @param key The record key of the record to insert
-     * @param fields Fields to write
-     * @param values Values corresponding to each field
-     * @return The result of the operation
+     * @param record Record to insert
+     * @return The status of the operation
      */
     virtual Status insert(StringView table,
                           StringView key,
-                          const std::vector<StringView>& fields,
-                          const std::vector<StringView>& values) = 0;
+                          const RecordView& record) = 0;
 
     /**
      * Delete a record from the database.
@@ -268,4 +279,8 @@ struct YcsbDBRegistry {
     static ::ycsb::YcsbDBRegistry<__type__> __name__##_registry_(#__name__)
 
 }
+
+template<>
+struct std::hash<ycsb::StringView> : public ycsb::StringView::Hash {};
+
 #endif

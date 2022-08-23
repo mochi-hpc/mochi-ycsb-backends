@@ -77,19 +77,22 @@ JNIEXPORT jobject JNICALL Java_cpp_ycsb_YcsbDBClient__1read
     ycsb::Status status;
 
     if(jfields != nullptr) {
-        std::vector<ycsb::StringView> fields;
+        std::unordered_set<ycsb::StringView> fields;
+        std::vector<ycsb::StringView> fields_strings;
 
         auto set_helper = ycsb::SetHelper(env, jfields);
-        set_helper.foreach([env, &fields](jobject jfield) {
+        set_helper.foreach([env, &fields, &fields_strings](jobject jfield) {
             const char* field = env->GetStringUTFChars((jstring)jfield, nullptr);
-            fields.emplace_back(field);
+            auto sw = ycsb::StringView(field);
+            fields.emplace(sw);
+            fields_strings.push_back(sw);
         });
 
         status = db->read(table, key, fields, results);
 
         unsigned i = 0;
-        set_helper.foreach([env, &fields, &i](jobject jfield) {
-            auto& field = fields[i];
+        set_helper.foreach([env, &fields_strings, &i](jobject jfield) {
+            auto& field = fields_strings[i];
             env->ReleaseStringUTFChars((jstring)jfield, field.data());
             i += 1;
         });
@@ -124,19 +127,22 @@ JNIEXPORT jobject JNICALL Java_cpp_ycsb_YcsbDBClient__1scan
     ycsb::Status status;
 
     if(jfields != nullptr) {
-        std::vector<ycsb::StringView> fields;
+        std::unordered_set<ycsb::StringView> fields;
+        std::vector<ycsb::StringView> fields_strings;
 
         auto set_helper = ycsb::SetHelper(env, jfields);
-        set_helper.foreach([env, &fields](jobject jfield) {
+        set_helper.foreach([env, &fields, &fields_strings](jobject jfield) {
             const char* field = env->GetStringUTFChars((jstring)jfield, nullptr);
-            fields.emplace_back(field);
+            auto sw = ycsb::StringView(field);
+            fields.emplace(sw);
+            fields_strings.emplace_back(sw);
         });
 
         status = db->scan(table, startKey, recordCount, fields, results);
 
         unsigned i = 0;
-        set_helper.foreach([env, &fields, &i](jobject jfield) {
-            auto& field = fields[i];
+        set_helper.foreach([env, &fields_strings, &i](jobject jfield) {
+            auto& field = fields_strings[i];
             env->ReleaseStringUTFChars((jstring)jfield, field.data());
             i += 1;
         });
@@ -179,17 +185,19 @@ JNIEXPORT jobject JNICALL Java_cpp_ycsb_YcsbDBClient__1update
 
     std::vector<ycsb::StringView> fields;
     std::vector<ycsb::StringView> values;
+    ycsb::DB::RecordView record;
 
     auto values_map_helper = ycsb::MapHelper(env, jvalues);
-    values_map_helper.foreach([env, &values, &fields](jobject jfield, jobject jvalue) {
+    values_map_helper.foreach([env, &values, &fields, &record](jobject jfield, jobject jvalue) {
         const char* field = env->GetStringUTFChars((jstring)jfield, nullptr);
         jbyte*      value = env->GetByteArrayElements((jbyteArray)jvalue, nullptr);
         jsize       vsize = env->GetArrayLength((jbyteArray)jvalue);
         fields.emplace_back(field);
         values.emplace_back((const char*)value, vsize);
+        record.emplace(fields.back(), values.back());
     });
 
-    auto status = db->update(table, key, fields, values);
+    auto status = db->update(table, key, record);
 
     unsigned i=0;
     values_map_helper.foreach([env, &values, &fields, &i](jobject jfield, jobject jvalue) {
@@ -215,17 +223,19 @@ JNIEXPORT jobject JNICALL Java_cpp_ycsb_YcsbDBClient__1insert
     const char* key   = env->GetStringUTFChars(jkey, nullptr);
 
     std::vector<ycsb::StringView> fields, values;
+    ycsb::DB::RecordView record;
 
     auto values_map_helper = ycsb::MapHelper(env, jvalues);
-    values_map_helper.foreach([env, &values, &fields](jobject jfield, jobject jvalue) {
+    values_map_helper.foreach([env, &values, &fields, &record](jobject jfield, jobject jvalue) {
         const char* field = env->GetStringUTFChars((jstring)jfield, nullptr);
         jbyte*      value = env->GetByteArrayElements((jbyteArray)jvalue, nullptr);
         jsize       vsize = env->GetArrayLength((jbyteArray)jvalue);
         fields.emplace_back(field);
         values.emplace_back((const char*)value, vsize);
+        record.emplace(fields.back(), values.back());
     });
 
-    auto status = db->insert(table, key, fields, values);
+    auto status = db->insert(table, key, record);
 
     unsigned i=0;
     values_map_helper.foreach([env, &values, &fields, &i](jobject jfield, jobject jvalue) {
