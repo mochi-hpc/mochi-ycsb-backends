@@ -24,30 +24,30 @@ jobs:
 
     - name: Find external packages
       run: |
-        spack env create -d .
-        eval `spack env activate --sh .` &&
+        spack env create test-env spack.yaml
+        eval `spack env activate test-env --sh` &&
         spack external find --not-buildable cmake
 
     - name: Add mochi-spack-packages
       run: |
         git clone https://github.com/mochi-hpc/mochi-spack-packages /opt/spack/mochi-spack-packages
-        eval `spack env activate --sh .` &&
+        eval `spack env activate test-env --sh` &&
         spack repo add /opt/spack/mochi-spack-packages
 
     - name: Install spack environment
       run: |
-        eval `spack env activate --sh .` &&
+        eval `spack env activate test-env --sh` &&
         spack concretize -f
         spack install
 
     - name: Show spack-installed packages for debugging
       run: |
-        eval `spack env activate --sh .` &&
+        eval `spack env activate test-env --sh` &&
         spack find -dlv
 
     - name: Build code
       run: |
-        eval `spack env activate --sh .` &&
+        eval `spack env activate test-env --sh` &&
         mkdir build && cd build &&
         JAVA_HOME=`spack location -i openjdk` cmake .. -DYCSB_ROOT=`spack location -i ycsb` &&
         make &&
