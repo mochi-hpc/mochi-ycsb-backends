@@ -7,7 +7,7 @@ find_package (Java REQUIRED)
 find_package (JNI REQUIRED)
 include (UseJava)
 
-find_jar (YCSB_JAR NAMES core VERSIONS 0.17.0 PATHS ${YCSB_ROOT}/lib ENV CLASSPATH)
+find_jar (YCSB_JAR NAMES core VERSIONS 0.17.0 0.18.0-SNAPSHOT PATHS ${YCSB_ROOT}/lib ENV CLASSPATH)
 if ("${YCSB_JAR}" STREQUAL "YCSB_JAR-NOTFOUND")
     message (FATAL_ERROR "Could not find YCSB's core jar, please set CLASSPATH or YCSB_ROOT")
 else ()
