@@ -43,12 +43,12 @@ jobs:
     - name: Build code
       run: |
         mkdir build && cd build &&
-        JAVA_HOME=`spack -e . location -i openjdk` cmake .. -DYCSB_ROOT=`spack -e . location -i ycsb` &&
+        JAVA_HOME=`spack -e .. location -i openjdk` cmake .. -DYCSB_ROOT=`spack -e .. location -i ycsb` &&
         make &&
         cd ..
 
     - name: Run YCSB workload
       run: |
         cd build &&
-        bin/ycsb-cpp load -P `spack -e . location -i ycsb`/workloads/workloada
+        bin/ycsb-cpp load -P `spack -e .. location -i ycsb`/workloads/workloada
 
